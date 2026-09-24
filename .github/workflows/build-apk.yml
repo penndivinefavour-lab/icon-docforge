@@ -22,11 +22,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install platform tools
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" < /dev/null
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" < /dev/null
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -53,9 +54,6 @@ jobs:
       - name: Build debug APK
         working-directory: ./android-apk/android
         run: ./gradlew assembleDebug
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
-          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Find built APK
         id: find_apk
