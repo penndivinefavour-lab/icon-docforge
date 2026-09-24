@@ -26,22 +26,52 @@
       "detail": ""
     },
     {
-      "test": "DOCX\u2192PDF",
+      "test": "ImageMagick NOT installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "LibreOffice NOT installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "DOCX->PDF",
       "passed": true,
       "detail": "11272B"
     },
     {
-      "test": "DOCX\u2192ODT",
+      "test": "DOCX->ODT",
       "passed": true,
       "detail": "8229B"
     },
     {
-      "test": "Images\u2192PDF 2 imgs",
+      "test": "DOCX->PDF empty",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Images->PDF 2 imgs",
       "passed": true,
       "detail": "2p"
     },
     {
-      "test": "Images\u2192PDF WebP",
+      "test": "Images->PDF WebP",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Images->PDF large",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Images->PDF transparent",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Images->PDF rotated",
       "passed": true,
       "detail": ""
     },
@@ -51,17 +81,27 @@
       "detail": ""
     },
     {
+      "test": "Nonexistent image fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Landscape A4",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "test": "PDF merge",
       "passed": true,
-      "detail": "1854B"
+      "detail": "1850B"
     },
     {
       "test": "PDF split",
       "passed": true,
-      "detail": "2030B"
+      "detail": "2032B"
     },
     {
-      "test": "PDF\u2192images",
+      "test": "PDF->images",
       "passed": true,
       "detail": "2p"
     },
@@ -71,17 +111,77 @@
       "detail": ""
     },
     {
-      "test": "CSV\u2192XLSX",
+      "test": "PDF merge 3 pages",
+      "passed": true,
+      "detail": "2639B"
+    },
+    {
+      "test": "PDF split all",
+      "passed": true,
+      "detail": "3179B"
+    },
+    {
+      "test": "PDF->text extraction",
+      "passed": true,
+      "detail": "611B"
+    },
+    {
+      "test": "PDF search",
+      "passed": true,
+      "detail": "matches=1"
+    },
+    {
+      "test": "PDF search no match",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "PDF page info",
+      "passed": true,
+      "detail": "pages=1"
+    },
+    {
+      "test": "PDF->image extraction",
+      "passed": true,
+      "detail": "1 images"
+    },
+    {
+      "test": "PDF compression",
+      "passed": true,
+      "detail": "ratio=65%"
+    },
+    {
+      "test": "Text watermark",
+      "passed": true,
+      "detail": "pages=3"
+    },
+    {
+      "test": "Page reorder",
+      "passed": true,
+      "detail": "2823B"
+    },
+    {
+      "test": "Delete page",
+      "passed": true,
+      "detail": "1972B"
+    },
+    {
+      "test": "CSV->XLSX",
       "passed": true,
       "detail": "4960B"
     },
     {
-      "test": "XLSX\u2192CSV",
+      "test": "XLSX->CSV",
       "passed": true,
       "detail": "108B"
     },
     {
-      "test": "Markdown\u2192PDF",
+      "test": "XLSX multi-sheet",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Markdown->PDF",
       "passed": true,
       "detail": "4532B"
     },
@@ -91,7 +191,12 @@
       "detail": ""
     },
     {
-      "test": "validate_path works",
+      "test": "sanitize_unicode",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "validate_path",
       "passed": true,
       "detail": ""
     },
@@ -104,8 +209,53 @@
       "test": "safe_run",
       "passed": true,
       "detail": ""
+    },
+    {
+      "test": "safe_run missing",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "DOCX has headings",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "DOCX has tables",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "PDF has pages",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Image fixtures",
+      "passed": true,
+      "detail": "7 images"
+    },
+    {
+      "test": "Nonexistent DOCX fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Empty merge fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Empty images fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Nonexistent CSV fails",
+      "passed": true,
+      "detail": ""
     }
   ],
-  "passed": 21,
-  "total": 21
+  "passed": 51,
+  "total": 51
 }

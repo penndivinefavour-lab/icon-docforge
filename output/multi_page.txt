@@ -1,0 +1,24 @@
+Page 1 of Multi-Page Document
+This is page number 1. It contains text to verify page count preservation.
+
+--- Page Break ---
+
+Page 2 of Multi-Page Document
+This is page number 2. It contains text to verify page count preservation.
+
+--- Page Break ---
+
+Page 3 of Multi-Page Document
+This is page number 3. It contains text to verify page count preservation.
+
+--- Page Break ---
+
+Page 4 of Multi-Page Document
+This is page number 4. It contains text to verify page count preservation.
+
+--- Page Break ---
+
+Page 5 of Multi-Page Document
+This is page number 5. It contains text to verify page count preservation.
+
+
