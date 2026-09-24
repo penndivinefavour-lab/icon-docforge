@@ -1,4 +1,4 @@
-"""ICON DocForge Engine Capability Registry."""
+"""ICON DocForge Engine Capability Registry v1.1."""
 import subprocess
 import os
 import re
@@ -49,7 +49,7 @@ class EngineRegistry:
             r = safe_run([t, "-h"], timeout=5)
             if r["success"]: ok.append(t)
         if ok:
-            return {"name": "Poppler", "installed": True, "version": "26.02", "tools": ok, "health": "healthy", "capabilities": ["pdf-to-images", "pdf-merge", "pdf-split", "pdf-info", "pdf-to-text"]}
+            return {"name": "Poppler", "installed": True, "version": "26.02", "tools": ok, "health": "healthy", "capabilities": ["pdf-to-images", "pdf-merge", "pdf-split", "pdf-info", "pdf-to-text", "pdf-compress", "pdf-watermark", "pdf-reorder", "pdf-delete"]}
         return {"name": "Poppler", "installed": False, "health": "not found"}
     
     def get_healthy(self):
@@ -63,10 +63,10 @@ class EngineRegistry:
         return sorted(fmts)
     
     def health_report(self):
-        return {"product": "ICON DocForge", "version": "1.0.0", "healthy": len(self.get_healthy()), "total": len(self.engines), "engines": self.engines}
+        return {"product": "ICON DocForge", "version": "1.1.0", "healthy": len(self.get_healthy()), "total": len(self.engines), "engines": self.engines}
     
     def to_dict(self):
-        return {"product": "ICON DocForge", "version": "1.0.0", "engine_count": len(self.engines), "healthy_count": len(self.get_healthy()), "engines": self.engines}
+        return {"product": "ICON DocForge", "version": "1.1.0", "engine_count": len(self.engines), "healthy_count": len(self.get_healthy()), "engines": self.engines}
 
 
 _registry = None

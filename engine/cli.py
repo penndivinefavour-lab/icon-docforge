@@ -1,4 +1,4 @@
-"""CLI interface for ICON DocForge."""
+"""CLI interface for ICON DocForge v1.1."""
 import sys
 import os
 import argparse
@@ -7,7 +7,7 @@ import json
 def main():
     parser = argparse.ArgumentParser(
         prog="iconconvert",
-        description="ICON DocForge - Offline-first document conversion CLI"
+        description="ICON DocForge v1.1 - Offline-first document conversion CLI"
     )
     sub = parser.add_subparsers(dest="command")
     
@@ -43,11 +43,55 @@ def main():
     p.add_argument("--format", default="png", help="Image format")
     p.add_argument("--dpi", type=int, default=150, help="DPI")
     
+    # pdf-text
+    p = sub.add_parser("pdf-text", help="Extract text from PDF")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--output", help="Output text file")
+    
+    # pdf-search
+    p = sub.add_parser("pdf-search", help="Search text in PDF")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("query", help="Search query")
+    p.add_argument("--case-sensitive", action="store_true", help="Case sensitive search")
+    
+    # pdf-info
+    p = sub.add_parser("pdf-info", help="Get PDF page information")
+    p.add_argument("input", help="Input PDF")
+    
+    # pdf-compress
+    p = sub.add_parser("pdf-compress", help="Compress PDF")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--output", help="Output PDF path")
+    p.add_argument("--dpi", type=int, default=72, help="DPI (lower = smaller)")
+    
+    # pdf-watermark
+    p = sub.add_parser("pdf-watermark", help="Add text watermark to PDF")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--text", default="CONFIDENTIAL", help="Watermark text")
+    p.add_argument("--output", help="Output PDF path")
+    
+    # pdf-reorder
+    p = sub.add_parser("pdf-reorder", help="Reorder PDF pages")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--pages", required=True, help="Page order (comma-separated, e.g., 3,1,2)")
+    p.add_argument("--output", help="Output PDF path")
+    
+    # pdf-delete
+    p = sub.add_parser("pdf-delete", help="Delete pages from PDF")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--pages", required=True, help="Pages to delete (comma-separated, e.g., 1,3,5)")
+    p.add_argument("--output", help="Output PDF path")
+    
     # formats
     sub.add_parser("formats", help="List supported formats")
     
     # doctor
     sub.add_parser("doctor", help="Check engine health")
+    
+    # pdf-extract-images
+    p = sub.add_parser("pdf-extract-images", help="Extract pages as images")
+    p.add_argument("input", help="Input PDF")
+    p.add_argument("--output", help="Output prefix")
     
     args = parser.parse_args()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -62,6 +106,22 @@ def main():
         _handle_pdf_split(args)
     elif args.command == "pdf-to-images":
         _handle_pdf_to_images(args)
+    elif args.command == "pdf-text":
+        _handle_pdf_text(args)
+    elif args.command == "pdf-search":
+        _handle_pdf_search(args)
+    elif args.command == "pdf-info":
+        _handle_pdf_info(args)
+    elif args.command == "pdf-compress":
+        _handle_pdf_compress(args)
+    elif args.command == "pdf-watermark":
+        _handle_pdf_watermark(args)
+    elif args.command == "pdf-reorder":
+        _handle_pdf_reorder(args)
+    elif args.command == "pdf-delete":
+        _handle_pdf_delete(args)
+    elif args.command == "pdf-extract-images":
+        _handle_pdf_extract_images(args)
     elif args.command == "formats":
         _handle_formats()
     elif args.command == "doctor":
@@ -92,13 +152,13 @@ def _handle_convert(args):
     elif input_path.endswith(".odt") and fmt == "docx":
         r = odt_to_docx(input_path, args.output)
     else:
-        print(f"Conversion {args.input} → {fmt}: Not supported locally")
+        print(f"Conversion {args.input} -> {fmt}: Not supported locally")
         return
     
     if r["success"]:
-        print(f"✅ Success: {r['output']} ({r.get('size', '?')} bytes) [{r.get('method', '?')}]")
+        print(f"Success: {r['output']} ({r.get('size','?')} bytes) [{r.get('method','?')}]")
     else:
-        print(f"❌ Failed: {r['error']}")
+        print(f"Failed: {r['error']}")
 
 
 def _handle_images_to_pdf(args):
@@ -106,36 +166,118 @@ def _handle_images_to_pdf(args):
     r = images_to_pdf(args.images, output_path=args.output, page_size=args.page_size,
                        orientation=args.orientation, quality=args.quality)
     if r["success"]:
-        print(f"✅ Images→PDF: {r['output']} ({r['size']} bytes, {r['pages']} pages)")
+        print(f"Images->PDF: {r['output']} ({r['size']} bytes, {r['pages']} pages)")
     else:
-        print(f"❌ Failed: {r['error']}")
+        print(f"Failed: {r['error']}")
 
 
 def _handle_pdf_merge(args):
     from engine.converters.pdf_merge import pdf_merge
     r = pdf_merge(args.pdfs, output_path=args.output)
     if r["success"]:
-        print(f"✅ PDFs merged: {r['output']} ({r['size']} bytes)")
+        print(f"PDFs merged: {r['output']} ({r['size']} bytes)")
     else:
-        print(f"❌ Failed: {r['error']}")
+        print(f"Failed: {r['error']}")
 
 
 def _handle_pdf_split(args):
     from engine.converters.pdf_split import pdf_split
     r = pdf_split(args.input, args.pages, output_path=args.output)
     if r["success"]:
-        print(f"✅ PDF split: {r['output']} ({r['size']} bytes)")
+        print(f"PDF split: {r['output']} ({r['size']} bytes)")
     else:
-        print(f"❌ Failed: {r['error']}")
+        print(f"Failed: {r['error']}")
 
 
 def _handle_pdf_to_images(args):
     from engine.converters.pdf_to_images import pdf_to_images
     r = pdf_to_images(args.input, output_path=args.output, format=args.format, dpi=args.dpi)
     if r["success"]:
-        print(f"✅ PDF→images: {r['count']} files generated")
+        print(f"PDF->images: {r['count']} files generated")
     else:
-        print(f"❌ Failed: {r['error']}")
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_text(args):
+    from engine.converters.pdf_text import extract_text
+    r = extract_text(args.input, args.output)
+    if r["success"]:
+        print(f"Text extracted: {r['pages']} pages, {len(r['text'])} chars")
+        if args.output:
+            print(f"Output: {args.output}")
+        else:
+            print(r['text'][:500])
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_search(args):
+    from engine.converters.pdf_text import search_text
+    r = search_text(args.input, args.query, args.case_sensitive)
+    if r["success"]:
+        print(f"Found {r['total_matches']} matches for '{args.query}':")
+        for m in r['matches'][:20]:
+            print(f"  Page {m['page']} at position {m['position']}")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_info(args):
+    from engine.converters.pdf_text import get_page_info
+    r = get_page_info(args.input)
+    if r["success"]:
+        for key, val in r.items():
+            if key != "success":
+                print(f"  {key}: {val}")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_compress(args):
+    from engine.converters.pdf_compress import compress_pdf
+    r = compress_pdf(args.input, args.output, args.dpi)
+    if r["success"]:
+        print(f"PDF compressed: {r['output']} ({r['method']})")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_watermark(args):
+    from engine.converters.pdf_text import add_text_watermark, extract_text
+    r = add_text_watermark(args.input, args.text, args.output)
+    if r["success"]:
+        print(f"Watermark added: {r['output']} (text='{r['watermark']}')")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_reorder(args):
+    from engine.converters.pdf_reorder import reorder_pages
+    pages = [int(x.strip()) for x in args.pages.split(',')]
+    r = reorder_pages(args.input, pages, args.output)
+    if r["success"]:
+        print(f"Pages reordered: {r['output']} (order={r['order']})")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_delete(args):
+    from engine.converters.pdf_reorder import delete_pages
+    pages = [int(x.strip()) for x in args.pages.split(',')]
+    r = delete_pages(args.input, pages, args.output)
+    if r["success"]:
+        print(f"Pages deleted: {r['output']}")
+    else:
+        print(f"Failed: {r['error']}")
+
+
+def _handle_pdf_extract_images(args):
+    from engine.converters.pdf_text import extract_images
+    r = extract_images(args.input, args.output)
+    if r["success"]:
+        print(f"Extracted {r['count']} images: {', '.join(r['images'])}")
+    else:
+        print(f"Failed: {r['error']}")
 
 
 def _handle_formats():
@@ -147,28 +289,26 @@ def _handle_formats():
         if info.get("installed"):
             v = info.get("version", "?")
             caps = info.get("capabilities", [])
-            print(f"  ✅ {name} ({v}): {', '.join(caps) if caps else 'general'}")
+            print(f"  OK {name} ({v}): {', '.join(caps) if caps else 'general'}")
 
 
 def _handle_doctor():
     from engine.registry import get_registry
     r = get_registry()
     report = r.health_report()
-    print(f"🔧 {report['product']} v{report['version']}")
-    print(f"   Healthy engines: {report['healthy']}/{report['total']}")
+    print(f"IconForge v{report['version']}")
+    print(f"Healthy engines: {report['healthy']}/{report['total']}")
     print()
     for name, info in report['engines'].items():
-        status = "✅" if info.get("installed") else "❌"
+        status = "OK" if info.get("installed") else "MISSING"
         v = info.get("version", "?")
         print(f"  {status} {name}: {v}")
     
-    import os
+    from engine.config import OUTPUT_DIR, TEMP_DIR, PRIVACY_MESSAGE
     print()
-    print(f"📁 Output dir: {os.path.expanduser(str(r.engines.get('pandoc', {})))}")
-    from engine.config import OUTPUT_DIR, TEMP_DIR
-    print(f"📁 Output: {OUTPUT_DIR}")
-    print(f"📁 Temp: {TEMP_DIR}")
-    print(f"💾 Privacy: {__import__('engine.config', fromlist=['PRIVACY_MESSAGE']).PRIVACY_MESSAGE}")
+    print(f"Output: {OUTPUT_DIR}")
+    print(f"Temp: {TEMP_DIR}")
+    print(f"Privacy: {PRIVACY_MESSAGE}")
 
 
 if __name__ == "__main__":
