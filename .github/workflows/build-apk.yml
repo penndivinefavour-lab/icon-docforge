@@ -20,118 +20,89 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
           api-level: 34
           build-tools: '34.0.0'
-      
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+          cache-dependency-path: android-apk/package-lock.json
+
       - name: Install Android dependencies
         working-directory: ./android-apk
         run: npm ci
-      
+
       - name: Sync web assets to www
         run: |
           mkdir -p android-apk/www
           cp -r web/* android-apk/www/
           echo "Web assets synced:"
           ls -la android-apk/www/
-      
-      - name: Sync to Capacitor www
-        run: |
-          mkdir -p android-apk/android/app/src/main/assets/www
-          cp -r web/* android-apk/android/app/src/main/assets/www/
-          echo "Assets also copied to assets/www"
-          ls android-apk/android/app/src/main/assets/www/
-      
-      - name: Add Android platform (if not exists)
+
+      - name: Sync Capacitor
         working-directory: ./android-apk
-        run: npx cap sync android || npx cap add android
-      
+        run: npx cap sync android
+
       - name: Grant execute permission to gradlew
         working-directory: ./android-apk/android
         run: chmod +x gradlew
-      
+
       - name: Build debug APK
         working-directory: ./android-apk/android
         run: ./gradlew assembleDebug
-      
-      - name: Find built APK
-        id: find_apk
+
+      - name: Generate SHA-256 checksums
         run: |
-          apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
-          if [ -z "$apk_path" ]; then
-            apk_path=$(find android-apk/android/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
-          fi
-          echo "APK_PATH=$apk_path" >> $GITHUB_ENV
-          echo "Built APK: $apk_path"
+          apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" | head -1)
           if [ -f "$apk_path" ]; then
+            sha256sum "$apk_path" > "${apk_path}.sha256"
+            echo "APK_PATH=$apk_path" >> $GITHUB_ENV
+            echo "Generated checksum for: $(basename $apk_path)"
             ls -lh "$apk_path"
-            sha256sum "$apk_path" > "${apk_path}.sha256"
             cat "${apk_path}.sha256"
+          else
+            echo "ERROR: APK not found"
+            exit 1
           fi
-      
-      - name: Generate SHA-256 checksum
-        if: steps.find_apk.outputs.apk_path != ''
-        run: |
-          apk_path="${{ env.APK_PATH }}"
-          if [ -f "$apk_path" ]; then
-            sha256sum "$apk_path" > "${apk_path}.sha256"
-            echo "Checksum:"
-            cat "${apk_path}.sha256"
-          fi
-      
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: icon-docforge-debug-apk
           path: ${{ env.APK_PATH }}
-          if-no-files-found: error
-      
+
       - name: Upload checksum
         uses: actions/upload-artifact@v4
         with:
           name: icon-docforge-checksum
           path: ${{ env.APK_PATH }}.sha256
-          if-no-files-found: error
-      
+
       - name: Create GitHub Release (tagged only)
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         run: |
           apk_path="${{ env.APK_PATH }}"
           sha_path="${apk_path}.sha256"
           version="${GITHUB_REF#refs/tags/}"
-          
           gh release create "$version" \
             --title "ICON DocForge $version" \
-            --notes "Production release of ICON DocForge document converter. Offline-first, privacy-focused." \
+            --notes "Production release of ICON DocForge offline document converter. All conversions run locally on your device." \
             "$apk_path" \
             "$sha_path"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Report build status
-        run: |
-          echo "=== BUILD COMPLETE ==="
-          echo "APK Path: ${{ env.APK_PATH }}"
-          if [ -f "${{ env.APK_PATH }}" ]; then
-            echo "APK Size: $(ls -lh ${{ env.APK_PATH }} | awk '{print $5}')"
-            echo "SHA-256: $(cat ${{ env.APK_PATH }}.sha256)"
-          fi
