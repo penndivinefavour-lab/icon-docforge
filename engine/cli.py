@@ -82,11 +82,14 @@ def main():
     p.add_argument("--pages", required=True, help="Pages to delete (comma-separated, e.g., 1,3,5)")
     p.add_argument("--output", help="Output PDF path")
     
+    # doctor
+    sub.add_parser("doctor", help="Check engine health")
+    
     # formats
     sub.add_parser("formats", help="List supported formats")
     
-    # doctor
-    sub.add_parser("doctor", help="Check engine health")
+    # office-status
+    sub.add_parser("office-status", help="Diagnose Office conversion support")
     
     # pdf-extract-images
     p = sub.add_parser("pdf-extract-images", help="Extract pages as images")
@@ -126,6 +129,8 @@ def main():
         _handle_formats()
     elif args.command == "doctor":
         _handle_doctor()
+    elif args.command == "office-status":
+        _handle_office_status()
     else:
         parser.print_help()
 
@@ -135,28 +140,78 @@ def _handle_convert(args):
     from engine.converters.markdown_to_pdf import markdown_to_pdf
     from engine.converters.csv_xlsx import csv_to_xlsx, xlsx_to_csv
     from engine.converters.docx_odt import docx_to_odt, odt_to_docx
-    
+    from engine.converters.docx_convert import (docx_to_html, html_to_docx, docx_to_txt,
+                                                txt_to_docx, docx_to_markdown,
+                                                markdown_to_docx, docx_to_epub)
+    from engine.converters.docx_to_pdf_v2 import odt_to_pdf, txt_to_pdf
+    from engine.converters.pptx_convert import (pptx_to_pdf, pptx_to_images,
+                                                pptx_to_docx, docx_to_pptx)
+    from engine.converters.pdf_to_office import pdf_to_docx, pdf_to_pptx
+    from engine.converters.spreadsheet_pdf import xlsx_to_pdf, ods_to_xlsx, xlsx_to_ods
+    from engine.converters.docx_odt import odt_to_docx
+
     input_path = args.input
     fmt = args.to.lower()
-    
+
     if input_path.endswith(".docx") and fmt == "pdf":
-        r = docx_to_pdf(input_path, args.output)
+        from engine.converters.docx_to_pdf_v2 import docx_to_pdf as docx_to_pdf_v2
+        r = docx_to_pdf_v2(input_path, args.output)
     elif input_path.endswith(".md") and fmt == "pdf":
         r = markdown_to_pdf(input_path, args.output)
+    elif input_path.endswith(".txt") and fmt == "pdf":
+        r = txt_to_pdf(input_path, args.output)
     elif input_path.endswith(".csv") and fmt == "xlsx":
         r = csv_to_xlsx(input_path, args.output)
     elif input_path.endswith(".xlsx") and fmt == "csv":
         r = xlsx_to_csv(input_path, args.output)
+    elif input_path.endswith(".xlsx") and fmt == "pdf":
+        r = xlsx_to_pdf(input_path, args.output)
+    elif input_path.endswith(".xlsx") and fmt == "ods":
+        r = xlsx_to_ods(input_path, args.output)
+    elif input_path.endswith(".ods") and fmt == "xlsx":
+        r = ods_to_xlsx(input_path, args.output)
     elif input_path.endswith(".docx") and fmt == "odt":
         r = docx_to_odt(input_path, args.output)
     elif input_path.endswith(".odt") and fmt == "docx":
         r = odt_to_docx(input_path, args.output)
+    elif input_path.endswith(".odt") and fmt == "pdf":
+        r = odt_to_pdf(input_path, args.output)
+    elif input_path.endswith(".pdf") and fmt == "odt":
+        from engine.converters.docx_to_pdf_v2 import pdf_to_odt
+        r = pdf_to_odt(input_path, args.output)
+    elif input_path.endswith(".pdf") and fmt == "docx":
+        r = pdf_to_docx(input_path, args.output)
+    elif input_path.endswith(".pdf") and fmt == "pptx":
+        r = pdf_to_pptx(input_path, args.output)
+    elif input_path.endswith(".docx") and fmt == "html":
+        r = docx_to_html(input_path, args.output)
+    elif input_path.endswith(".html") and fmt == "docx":
+        r = html_to_docx(input_path, args.output)
+    elif input_path.endswith(".docx") and fmt == "txt":
+        r = docx_to_txt(input_path, args.output)
+    elif input_path.endswith(".txt") and fmt == "docx":
+        r = txt_to_docx(input_path, args.output)
+    elif input_path.endswith(".docx") and fmt == "md":
+        r = docx_to_markdown(input_path, args.output)
+    elif input_path.endswith(".md") and fmt == "docx":
+        r = markdown_to_docx(input_path, args.output)
+    elif input_path.endswith(".docx") and fmt == "pptx":
+        r = docx_to_pptx(input_path, args.output)
+    elif input_path.endswith(".docx") and fmt == "epub":
+        r = docx_to_epub(input_path, args.output)
+    elif input_path.endswith(".pptx") and fmt == "pdf":
+        r = pptx_to_pdf(input_path, args.output)
+    elif input_path.endswith(".pptx") and fmt in ("png", "jpg", "jpeg", "images"):
+        r = pptx_to_images(input_path, args.output)
+    elif input_path.endswith(".pptx") and fmt == "docx":
+        r = pptx_to_docx(input_path, args.output)
     else:
         print(f"Conversion {args.input} -> {fmt}: Not supported locally")
         return
-    
+
     if r["success"]:
-        print(f"Success: {r['output']} ({r.get('size','?')} bytes) [{r.get('method','?')}]")
+        fid = r.get("fidelity", "")
+        print(f"Success: {r['output']} ({r.get('size','?')} bytes) [{r.get('method','?')}] {f'[{fid}]' if fid else ''}")
     else:
         print(f"Failed: {r['error']}")
 
@@ -309,6 +364,24 @@ def _handle_doctor():
     print(f"Output: {OUTPUT_DIR}")
     print(f"Temp: {TEMP_DIR}")
     print(f"Privacy: {PRIVACY_MESSAGE}")
+
+
+def _handle_office_status():
+    from engine.registry import get_registry
+    r = get_registry()
+    status = r.office_status()
+    print(f"ICON DocForge v{status['version']} — Office Conversion Status")
+    print(f"Fonts installed: {status['fonts_installed']} (DejaVu: {status['dejavu_available']})")
+    print()
+    print(f"{'CONVERSION':22s} {'SUPPORTED':10s} {'FIDELITY':24s} METHOD")
+    print("-" * 92)
+    for c in status["conversions"]:
+        mark = "yes" if c["supported"] else "no"
+        print(f"{c['path']:22s} {mark:10s} {c['fidelity']:24s} {c['method']}")
+    if status["unsupported"]:
+        print()
+        print("Unsupported locally:", ", ".join(status["unsupported"]))
+        print("(no LibreOffice / ODP renderer on Termux; see OFFICE_LIMITATIONS.md)")
 
 
 if __name__ == "__main__":

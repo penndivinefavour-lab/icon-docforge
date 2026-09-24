@@ -8,11 +8,11 @@ def extract_text(pdf_path, output_path=None):
         return {"success": False, "error": "File not found"}
     result = safe_run(["pdftotext", pdf_path, "-"], timeout=30)
     if result["success"]:
-        text = result["output"].strip()
+        text = result["stdout"].strip()
         if output_path:
             with open(output_path, 'w') as f: f.write(text)
         return {"success": True, "text": text, "pages": text.count('\f') + 1}
-    return {"success": False, "error": result["error"]}
+    return {"success": False, "error": result["stderr"]}
 
 def search_text(pdf_path, query, case_sensitive=False):
     """Search text in PDF, returns page numbers with matches."""
@@ -36,7 +36,7 @@ def get_page_info(pdf_path):
     info = safe_run(["pdfinfo", pdf_path], timeout=10)
     page_info = {}
     if info["success"]:
-        for line in info["output"].strip().split('\n'):
+        for line in info["stdout"].strip().split('\n'):
             if ':' in line:
                 key, val = line.split(':', 1)
                 page_info[key.strip().lower()] = val.strip()

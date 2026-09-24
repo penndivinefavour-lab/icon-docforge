@@ -4,7 +4,7 @@
 
 ICON DocForge is a self-contained document conversion engine that runs entirely offline on your device. No cloud processing, no data uploads, no account required. All conversions happen locally using battle-tested open-source libraries.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Termux%20%7C%20Web-green)
 ![License](https://img.shields.io/badge/license-MIT-gray)
 

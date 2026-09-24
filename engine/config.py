@@ -28,7 +28,7 @@ API_PORT = int(os.environ.get("ICONDOCFORGE_HTTP_PORT", "8765"))
 
 # Product
 PRODUCT_NAME = "ICON DocForge"
-PRODUCT_VERSION = "1.0.0"
+PRODUCT_VERSION = "1.2.0"
 AUTHOR = "Divine Favour · ICON Studios · Yaoundé, Cameroon"
 PRIVACY_MESSAGE = "Your files stay on your device. No documents are uploaded to any server."
 DEFAULT_ONLINE_MODE = False

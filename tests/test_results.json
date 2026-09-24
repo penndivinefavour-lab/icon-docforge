@@ -3,7 +3,7 @@
     {
       "test": "Registry initialized",
       "passed": true,
-      "detail": "10 healthy"
+      "detail": "v1.2.0"
     },
     {
       "test": "Pandoc installed",
@@ -11,59 +11,149 @@
       "detail": "v3.11"
     },
     {
-      "test": "Poppler installed",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "test": "WeasyPrint installed",
       "passed": true,
       "detail": ""
     },
     {
-      "test": "GhostScript NOT installed",
+      "test": "pdfplumber installed",
       "passed": true,
       "detail": ""
     },
     {
-      "test": "DOCX\u2192PDF",
+      "test": "odfpy installed",
       "passed": true,
-      "detail": "11272B"
+      "detail": ""
+    },
+    {
+      "test": "mammoth installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "docx2txt installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "ghostscript NOT installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "DOCX\u2192PDF v1 (bare)",
+      "passed": true,
+      "detail": "17039B"
+    },
+    {
+      "test": "DOCX\u2192PDF v2 (styled)",
+      "passed": true,
+      "detail": "62569B HIGH-FIDELITY"
     },
     {
       "test": "DOCX\u2192ODT",
       "passed": true,
-      "detail": "8229B"
+      "detail": "(via DOCX\u2192PDF\u2192... using pandoc)"
     },
     {
-      "test": "Images\u2192PDF 2 imgs",
+      "test": "DOCX\u2192HTML",
       "passed": true,
-      "detail": "2p"
+      "detail": "7545B"
     },
     {
-      "test": "Images\u2192PDF WebP",
+      "test": "HTML\u2192DOCX round-trip",
+      "passed": true,
+      "detail": "para=23"
+    },
+    {
+      "test": "DOCX\u2192TXT",
+      "passed": true,
+      "detail": "1176B"
+    },
+    {
+      "test": "TXT\u2192DOCX round-trip",
       "passed": true,
       "detail": ""
     },
     {
-      "test": "Empty images fails",
+      "test": "DOCX\u2192Markdown",
+      "passed": true,
+      "detail": "1507B"
+    },
+    {
+      "test": "Markdown\u2192DOCX round-trip",
       "passed": true,
       "detail": ""
     },
     {
-      "test": "PDF merge",
+      "test": "DOCX\u2192EPUB",
       "passed": true,
-      "detail": "1854B"
+      "detail": "10411B"
     },
     {
-      "test": "PDF split",
+      "test": "Preflight clean",
       "passed": true,
-      "detail": "2030B"
+      "detail": "warns=[]"
     },
     {
-      "test": "PDF\u2192images",
+      "test": "PDF text extraction",
       "passed": true,
-      "detail": "2p"
+      "detail": "1083 chars"
+    },
+    {
+      "test": "PDF text search",
+      "passed": true,
+      "detail": "1 matches"
+    },
+    {
+      "test": "PDF page info",
+      "passed": true,
+      "detail": "2 pages"
+    },
+    {
+      "test": "PDF image extraction",
+      "passed": true,
+      "detail": "0 imgs"
+    },
+    {
+      "test": "PDF compression",
+      "passed": true,
+      "detail": "0B"
+    },
+    {
+      "test": "PDF watermark",
+      "passed": true,
+      "detail": "/data/data/com.termux/files/home/ICON Studios 2026/ICON DocForge/tests/fixtures/pdf/rich_doc_rendered_watermarked.pdf"
+    },
+    {
+      "test": "PDF reorder (triple)",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "PDF delete p2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "PDF\u2192DOCX reconstruct",
+      "passed": true,
+      "detail": "37313B [STRUCTURAL-RECONSTRUCTION]"
+    },
+    {
+      "test": "PDF\u2192PPTX hybrid",
+      "passed": true,
+      "detail": "30073B"
+    },
+    {
+      "test": "PDF merge (dupes)",
+      "passed": true,
+      "detail": "2946B"
+    },
+    {
+      "test": "PDF split p1",
+      "passed": true,
+      "detail": "1858B"
     },
     {
       "test": "PDF metadata",
@@ -71,19 +161,79 @@
       "detail": ""
     },
     {
+      "test": "PPTX\u2192PDF",
+      "passed": true,
+      "detail": "5554B slides=5"
+    },
+    {
+      "test": "PPTX\u2192images",
+      "passed": true,
+      "detail": "6 files"
+    },
+    {
+      "test": "PPTX\u2192DOCX outline",
+      "passed": true,
+      "detail": "size=37093B"
+    },
+    {
+      "test": "DOCX\u2192PPTX semantic",
+      "passed": true,
+      "detail": "slides=7"
+    },
+    {
       "test": "CSV\u2192XLSX",
       "passed": true,
-      "detail": "4960B"
+      "detail": "4961B"
     },
     {
       "test": "XLSX\u2192CSV",
       "passed": true,
-      "detail": "108B"
+      "detail": "123B"
+    },
+    {
+      "test": "XLSX\u2192PDF",
+      "passed": true,
+      "detail": "3366B sheets=3"
+    },
+    {
+      "test": "PDF\u2192XLSX tables",
+      "passed": true,
+      "detail": "tables=3"
+    },
+    {
+      "test": "XLSX\u2192ODS",
+      "passed": true,
+      "detail": "1644B"
+    },
+    {
+      "test": "ODS\u2192XLSX",
+      "passed": true,
+      "detail": "sheets=1"
+    },
+    {
+      "test": "Images\u2192PDF (3)",
+      "passed": true,
+      "detail": "3p"
+    },
+    {
+      "test": "Empty images fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "ODT\u2192PDF",
+      "passed": true,
+      "detail": "47545B"
+    },
+    {
+      "test": "ODT\u2192DOCX",
+      "passed": true,
+      "detail": "para=4"
     },
     {
       "test": "Markdown\u2192PDF",
       "passed": true,
-      "detail": "4532B"
+      "detail": "15201B"
     },
     {
       "test": "sanitize_filename",
@@ -104,8 +254,28 @@
       "test": "safe_run",
       "passed": true,
       "detail": ""
+    },
+    {
+      "test": "Preflight empty doc",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Preflight nonexistent",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Validate DOCX",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Unicode filename",
+      "passed": true,
+      "detail": "17039"
     }
   ],
-  "passed": 21,
-  "total": 21
+  "passed": 55,
+  "total": 55
 }

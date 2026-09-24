@@ -48,7 +48,7 @@ def _get_page_count(pdf_path):
     from engine.utils import safe_run
     result = safe_run(["pdfinfo", pdf_path], timeout=10)
     if result["success"]:
-        for line in result["output"].strip().split('\n'):
+        for line in result["stdout"].strip().split('\n'):
             if line.lower().startswith("pages:"):
                 try:
                     return int(line.split(":")[1].strip())
