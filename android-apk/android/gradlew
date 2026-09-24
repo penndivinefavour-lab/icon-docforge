@@ -25,7 +25,7 @@
 # Resolve links: $0 may be a link
 app_path=$0
 while
-    APP_HOME=${app_path%"${app_path##*/}"}  # leaves a trailing /; empty if no leading path
+    APP_HOME=${app_path%"${app_path##*/}"}
     [ -h "$app_path" ]
 do
     ls=$( ls -ld -- "$app_path" )
@@ -111,34 +111,10 @@ fi
 
 # Collect all arguments for the java command:
 #   * $@ does not work as expected as it expands arguments based on the value of $IFS.
-shopt -u extglob
-stub=$(command -S "$JAVACMD" || echo "$JAVACMD")
-case "$stub" in
-  *"$IFS"*|*' '*|*'	'*) has_spaces=false ;;
-  *) has_spaces=true ;;
-esac
-JAVA_VERSION=$("$stub" --release 2>/dev/null || echo "")
-if ! "$has_spaces" && \
-   ! [[ "${JAVA_VERSION}" =~ ^9 ]] && \
-   ! [[ "${JAVA_VERSION}" =~ ^(1\.[0-6][^\d]*|1[.]8) ]]; then
-  JAVA_OPTS="-javaagent:$stub=enabled"
-  CLASSPATH="$CLASSPATH:$APP_HOME/gradle/wrapper Stub.jar"
-fi
 set -- \
         "-Dorg.gradle.appname=$APP_BASE_NAME" \
         -classpath "\"$CLASSPATH\"" \
         org.gradle.wrapper.GradleWrapperMain \
         "$@"
-unset stub
-
-# Use "xargs" to parse quoted args.
-#
-# With -n, args are split on whitespace and passed as arguments to xargs.
-# This also takes care of quoting.
-eval "set -- $(
-        printf '%s\n' "$DEFAULT_JVM_OPTS" "$JAVA_OPTS" "$GRADLE_OPTS" | \
-        xargs -n1 | \
-        xargs -n 1 -- %s\ "'"$'"'"'
-    )"
 
 exec "$JAVACMD" "$@"
