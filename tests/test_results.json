@@ -88,7 +88,7 @@
     {
       "test": "DOCX\u2192EPUB",
       "passed": true,
-      "detail": "10411B"
+      "detail": "10412B"
     },
     {
       "test": "Preflight clean",
@@ -183,7 +183,7 @@
     {
       "test": "CSV\u2192XLSX",
       "passed": true,
-      "detail": "4961B"
+      "detail": "4960B"
     },
     {
       "test": "XLSX\u2192CSV",

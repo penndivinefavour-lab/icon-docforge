@@ -89,7 +89,22 @@ def main():
     sub.add_parser("formats", help="List supported formats")
     
     # office-status
-    sub.add_parser("office-status", help="Diagnose Office conversion support")
+    p = sub.add_parser("office-status", help="Diagnose Office conversion support")
+    
+    # ocr
+    p = sub.add_parser("ocr", help="Run OCR on an image or PDF")
+    p.add_argument("input", help="Input file (image or PDF)")
+    p.add_argument("--language", default="eng", help="Language code (default: eng)")
+    p.add_argument("--profile", choices=["fast", "balanced", "quality"], default="balanced",
+                   help="Preprocessing profile (default: balanced)")
+    p.add_argument("--mode", choices=["auto", "force"], default="auto",
+                   help="OCR mode for PDFs (default: auto)")
+    p.add_argument("--format", choices=["txt", "json", "html"], default="txt",
+                   help="Output format (default: txt)")
+    p.add_argument("--output", help="Output file path")
+    
+    # ocr-status
+    sub.add_parser("ocr-status", help="Check OCR engine availability")
     
     # pdf-extract-images
     p = sub.add_parser("pdf-extract-images", help="Extract pages as images")
@@ -131,6 +146,10 @@ def main():
         _handle_doctor()
     elif args.command == "office-status":
         _handle_office_status()
+    elif args.command == "ocr":
+        _handle_ocr(args)
+    elif args.command == "ocr-status":
+        _handle_ocr_status(args)
     else:
         parser.print_help()
 
@@ -382,6 +401,59 @@ def _handle_office_status():
         print()
         print("Unsupported locally:", ", ".join(status["unsupported"]))
         print("(no LibreOffice / ODP renderer on Termux; see OFFICE_LIMITATIONS.md)")
+
+
+def _handle_ocr(args):
+    """Handle OCR command."""
+    from engine.converters.ocr_pipeline import run_ocr
+    
+    output_format = getattr(args, 'format', 'txt') or 'txt'
+    language = getattr(args, 'language', 'eng') or 'eng'
+    profile = getattr(args, 'profile', 'balanced') or 'balanced'
+    mode = getattr(args, 'mode', 'auto') or 'auto'
+    
+    result = run_ocr(
+        input_path=args.input,
+        language=language,
+        profile=profile,
+        mode=mode,
+        output_format=output_format,
+    )
+    
+    if result["success"]:
+        # Write to file if specified
+        if hasattr(args, 'output') and args.output:
+            os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(result["text"])
+            print(f"OCR complete: {args.output}")
+        else:
+            print(result["text"])
+        
+        print(f"\nConfidence: {result.get('confidence', 0):.1%}")
+        print(f"Engine: {result.get('engine', 'unknown')}")
+    else:
+        print(f"OCR failed: {', '.join(result.get('errors', ['Unknown error']))}")
+
+
+def _handle_ocr_status(args):
+    """Handle ocr-status command."""
+    from engine.ocr_engine import get_ocr_manager
+    mgr = get_ocr_manager()
+    status = mgr.ocr_status()
+    
+    print(f"OCR Status: {status['status'].upper()}")
+    print(f"Primary engine: {status['primary_engine']}")
+    print()
+    print("Available engines:")
+    for name, info in status['engines'].items():
+        avail = "✓" if info['available'] else "✗"
+        print(f"  [{avail}] {name}: v{info['version']}")
+    if status['recommendations']:
+        print()
+        print("Recommendations:")
+        for rec in status['recommendations']:
+            print(f"  • {rec}")
 
 
 if __name__ == "__main__":
