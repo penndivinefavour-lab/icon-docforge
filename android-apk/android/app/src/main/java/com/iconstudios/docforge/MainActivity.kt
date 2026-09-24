@@ -1,7 +1,7 @@
 package com.iconstudios.docforge
 
 import android.os.Bundle
-import androidx.appcompat.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import java.io.File
 
