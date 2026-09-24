@@ -1,14 +1,12 @@
 package com.iconstudios.docforge
 
 import android.os.Bundle
-import android.view.View
-import android.widget.Toast
-import capacitor.android.CapacitorActivity
-import androidx.activity.result.contract.ActivityResultContracts
+import android.webkit.WebView
+import com.getcapacitor.BridgeActivity
 import androidx.core.content.FileProvider
 import java.io.File
 
-class MainActivity : CapacitorActivity() {
+class MainActivity : BridgeActivity() {
     
     companion object {
         const val TAG = "IconDocForge"
@@ -19,14 +17,8 @@ class MainActivity : CapacitorActivity() {
         
         // Enable WebView debugging in debug builds
         if (BuildConfig.DEBUG) {
-            android.webkit.WebView.setWebContentsDebuggingEnabled(true)
+            WebView.setWebContentsDebuggingEnabled(true)
         }
-        
-        // Initialize Capacitor
-        init(savedInstanceState, StarterPlugin())
-        
-        // Load the web app
-        load()
     }
     
     /**
@@ -80,47 +72,7 @@ class MainActivity : CapacitorActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "No app found to open this file type", Toast.LENGTH_LONG).show()
-        }
-    }
-    
-    /**
-     * Show error toast
-     */
-    fun showError(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        }
-    }
-    
-    /**
-     * Show success toast
-     */
-    fun showSuccess(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-/**
- * StarterPlugin - Capacitor plugin registration
- */
-class StarterPlugin : org.apache.cordova.CordovaPlugin() {
-    override fun execute(action: String, args: org.json.JSONArray, callbackContext: org.apache.cordova.CallbackContext): Boolean {
-        when (action) {
-            "clearTemp" -> {
-                val tempDir = File(activity?.cacheDir, "temp")
-                if (tempDir.exists()) {
-                    tempDir.deleteRecursively()
-                    tempDir.mkdirs()
-                }
-                callbackContext.success()
-                return true
-            }
-            else -> {
-                return false
-            }
+            android.widget.Toast.makeText(this, "No app found to open this file type", android.widget.Toast.LENGTH_LONG).show()
         }
     }
 }
