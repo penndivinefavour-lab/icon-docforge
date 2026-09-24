@@ -1,152 +1,342 @@
-# Security Considerations
+# SECURITY.md — ICON DocForge Security Architecture
 
 ## Overview
 
-ICON DocForge is designed with security as a core principle. All conversions happen locally with no network transmission. This document outlines the security architecture, potential risks, and mitigation strategies.
+ICON DocForge is designed with a security-first, privacy-by-default architecture. This document describes the security measures implemented to protect user data and prevent common attack vectors.
 
----
+## Local-Only Processing
 
-## Security Architecture
+### Core Principle
+**All document processing happens locally on the user's device.**
 
-### Local-Only Processing
+- No documents are uploaded to external servers
+- No conversion results leave the device
+- No metadata is transmitted during processing
+- The app functions completely offline after installation
 
-- The conversion engine binds to `127.0.0.1` (localhost only)
-- **No external network access** during conversion
-- No outbound connections of any kind
-- The HTTP server is not exposed to other devices by default
+### Network Isolation
 
-### File Validation
-
-All input files are validated before processing:
-
-1. **Magic byte verification**: Confirms the file matches the claimed format
-2. **Size limits**: Files over 50MB are rejected (configurable)
-3. **Extension validation**: File extension must match actual content type
-4. **Sandbox isolation**: All files are copied to `/tmp/docforge/{uuid}/` with restricted permissions
-
-### Input Sanitization
-
-- File paths are normalized to prevent directory traversal attacks
-- Filenames are sanitized (no special characters, no path separators)
-- Temporary files use UUID-based names to prevent guessing
-
----
-
-## Threat Model
-
-### What We Protect Against
-
-| Threat | Mitigation |
-|--------|-----------|
-| Malicious file upload | Magic byte validation, size limits, sandbox isolation |
-| Directory traversal | Path normalization, filename sanitization |
-| Local network exposure | Binds to localhost only by default |
-| Data leakage | No persistent storage, temp files cleaned up |
-| Denial of service | Conversion timeout (default 5 min), file size limits |
-| Privilege escalation | Runs with least-privilege user permissions |
-
-### What We Don't Protect Against
-
-- **Physical device access**: If someone has physical access to your device, they can access files
-- **Rooted devices**: Security model assumes a non-rooted device
-- **Malware on device**: If the device is compromised, all bets are off
-
----
-
-## Data Handling
-
-### In Transit
-- N/A — no data is transmitted over networks during conversion
-
-### At Rest
-- Temporary files are stored in `/tmp/docforge/` with `0600` permissions
-- Files are deleted immediately after conversion completes
-- No conversion history is persisted
-
-### In Memory
-- Files are loaded into memory for processing
-- Memory is zeroed after use where possible (Python's GC handles this)
-
----
-
-## Dependencies
-
-All Python dependencies are open-source and well-maintained:
-
-| Library | License | Security Status |
-|---------|---------|-----------------|
-| pdf2docx | MIT | No known vulnerabilities |
-| python-docx | MIT | No known vulnerabilities |
-| python-pptx | MIT | No known vulnerabilities |
-| openpyxl | MIT | No known vulnerabilities |
-| Pillow | HPND | No known vulnerabilities |
-| PyMuPDF | GNU AFFERO GPL 3 | No known vulnerabilities |
-| Flask | BSD-3-Clause | No known vulnerabilities |
-
-### Dependency Security
-- Run `pip audit` to check for known vulnerabilities
-- Update packages regularly: `pip install --upgrade`
-- Pin versions in `requirements.txt` for reproducible builds
-
----
-
-## Android-Specific Considerations
-
-### WebView Security
-- JavaScript enabled (required for functionality)
-- Content loaded from `file://` scheme (local assets only)
-- No mixed content (HTTP loaded from HTTPS page)
-- WebView debugging disabled in release builds
-
-### APK Security
-- Default build is unsigned debug APK
-- Release builds must be signed with a keystore
-- Keystore passwords must never be committed to source control
-- ProGuard is enabled in release builds for code obfuscation
-
----
-
-## Known Vulnerabilities
-
-### PDF Parsing
-- PDF files can contain malicious content (JavaScript, embedded exploits)
-- **Mitigation**: PyMuPDF uses a hardened parser; avoid opening untrusted PDFs
-- **Recommendation**: Process PDFs in a sandboxed environment if handling untrusted sources
-
-### Temp File Race Conditions
-- Theoretical race condition between file creation and validation
-- **Mitigation**: UUID-based filenames, filesystem-level isolation
-
----
-
-## Best Practices for Users
-
-1. **Only convert files you trust** — even local processing can have edge cases
-2. **Keep the app updated** — security patches are delivered via updates
-3. **Review permissions** — the app requests minimal permissions
-4. **Delete temp files** — manually clean `/tmp/docforge/` if needed
-5. **Use HTTPS for web access** — if exposing the server over a network
-
----
-
-## Security Auditing
-
-To audit the codebase:
-
-```bash
-# Check for dependency vulnerabilities:
-pip audit
-
-# Scan for common security issues:
-bandit -r engine.py
-
-# Review network bindings:
-grep -r "0.0.0.0" engine.py
-grep -r "socket" engine.py
+The app's HTTP API binds exclusively to localhost:
+```python
+# engine/config.py
+API_HOST = os.environ.get("ICONDOCFORGE_HTTP_HOST", "127.0.0.1")
+API_PORT = int(os.environ.get("ICONDOCFORGE_HTTP_PORT", "8765"))
 ```
 
+This ensures:
+1. Only the app's own WebView can communicate with the API
+2. No external applications can access the conversion service
+3. Network firewalls block all inbound connections to port 8765
+
+### Android Network Security Configuration
+
+```xml
+<!-- android/app/src/main/res/xml/network_security_config.xml -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
+```
+
+This configuration:
+- Blocks all cleartext (HTTP) traffic except localhost
+- Prevents man-in-the-middle attacks
+- Ensures TLS for any legitimate network requests
+
+## Input Validation
+
+### Path Traversal Prevention
+
+All file paths are validated using strict resolution checks:
+
+```python
+def validate_path(filepath: str, base_dir: str = None) -> Path:
+    resolved = Path(filepath).resolve()
+    base = Path(base_dir).resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        raise ValueError(f"Path traversal detected: {filepath}")
+    return resolved
+```
+
+This prevents:
+- Directory traversal attacks (`../../etc/passwd`)
+- Access to files outside the app's designated directories
+- Symbolic link exploitation
+
+### File Size Limits
+
+```python
+MAX_FILE_SIZE_BYTES = int(os.environ.get("ICONDOCFORGE_MAX_INPUT_BYTES", str(50 * 1024 * 1024)))
+```
+
+- Default maximum: 50 MB per file
+- Prevents disk exhaustion attacks
+- Configurable via environment variable
+
+### Subprocess Safety
+
+All external command execution uses argument arrays, never shell interpolation:
+
+```python
+def safe_run(cmd: list, timeout: int = None, capture_output: bool = True) -> dict:
+    proc = subprocess.run(
+        cmd,                              # Argument array, not shell string
+        capture_output=capture_output,
+        text=True,
+        timeout=timeout,
+        shell=False                       # Explicitly disable shell
+    )
+```
+
+This prevents:
+- Command injection via malicious filenames
+- Shell metacharacter interpretation
+- Untrusted input in subprocess arguments
+
+## Temporary File Handling
+
+### Secure Temporary Directory
+
+```python
+TEMP_DIR = pathlib.Path(os.environ.get("ICONDOCFORGE_TEMP", 
+                    str(pathlib.Path(tempfile.gettempdir()) / "icon-docforge")))
+```
+
+Characteristics:
+- Created within system temp directory
+- Prefix prevents naming conflicts
+- Auto-cleanup on completion
+
+### Cleanup Procedures
+
+All temporary files are cleaned up after:
+1. Successful conversion
+2. Conversion failure
+3. User cancellation
+4. App backgrounding (if safe)
+
+```python
+def cleanup_temp(temp_dir: str):
+    if temp_dir and os.path.exists(temp_dir):
+        try:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception:
+            pass  # Best-effort cleanup
+```
+
+## File Permission Handling
+
+### Android Permissions
+
+Minimal permissions requested:
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+```
+
+Rationale:
+- `INTERNET`: Required for Capacitor bridge (not used for external calls)
+- `ACCESS_NETWORK_STATE`: Offline detection
+- `READ_EXTERNAL_STORAGE`: Legacy file access (Android 12 and below)
+
+### Storage Access Framework (SAF)
+
+For Android 13+, the app uses SAF:
+- User explicitly grants access to specific directories
+- No broad filesystem permissions required
+- Revocable at any time via Settings
+
+## Dependency Security
+
+### Transitive Dependency Audit
+
+Key dependencies and their security profiles:
+
+| Package | Purpose | Version | Notes |
+|---------|---------|---------|-------|
+| reportlab | PDF generation | 5.0.0 | Well-maintained, no known vulns |
+| pypdfium2 | PDF rendering | 5.13.0 | Bindings to MuPDF, actively maintained |
+| python-docx | DOCX handling | 1.2.0 | Pure Python, minimal attack surface |
+| Pillow | Image processing | 12.3.0 | Industry standard, regular security updates |
+
+### No Sensitive Dependencies
+
+Deliberately excluded:
+- ❌ No database drivers (no persistent storage of user data)
+- ❌ No authentication libraries (no user accounts)
+- ❌ No encryption libraries for data-at-rest (files stay on device)
+- ❌ No logging frameworks (no telemetry)
+
+## Resource Exhaustion Prevention
+
+### Timeout Controls
+
+```python
+API_TIMEOUT = int(os.environ.get("ICONDOCFORGE_TIMEOUT", "300"))  # 5 minutes max
+```
+
+All subprocess operations have:
+- Hard timeout limits
+- Memory usage monitoring
+- Process kill on timeout
+
+### Concurrent Operation Limits
+
+```python
+MAX_CONCURRENT_JOBS = 2
+```
+
+Prevents:
+- Resource starvation
+- Memory exhaustion from parallel conversions
+- Denial-of-service via rapid sequential requests
+
+## Malicious Document Handling
+
+### Decompression Bombs
+
+The app limits:
+- Maximum archive extraction size
+- Nested archive depth
+- Total uncompressed bytes
+
+### Zip Slip Protection
+
+When extracting archives:
+```python
+# Validate each extracted file path
+for extracted_file in archive.namelist():
+    target_path = extract_to / extracted_file
+    if not target_path.resolve().is_relative_to(extract_to):
+        raise ValueError("Zip slip attack detected")
+```
+
+### Font Embedding Risks
+
+PDF generation uses safe font sources:
+- System fonts only (DejaVu)
+- No custom font injection
+- Font files validated before use
+
+## APK Security
+
+### Code Signing
+
+Release APKs are signed with:
+- RSA 2048-bit key
+- SHA-256 certificate fingerprint
+- Keystore stored in GitHub Secrets (never in repo)
+
+### ProGuard Obfuscation
+
+```gradle
+minifyEnabled true
+proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+shrinkResources true
+```
+
+Benefits:
+- Reduces APK size
+- Obfuscates class names
+- Removes unused code
+- Makes reverse engineering harder
+
+### Debug Symbols Stripped
+
+```gradle
+ndk {
+    debugSymbolLevel = 'NONE'
+}
+```
+
+Prevents:
+- Stack trace exposure in production
+- Binary analysis for vulnerabilities
+
+## Privacy Architecture
+
+### Data Flow Diagram
+
+```
+User selects file
+       ↓
+File copied to app temp dir (private)
+       ↓
+Python engine processes file (local)
+       ↓
+Output written to app temp dir
+       ↓
+User opens/shares/saves output
+       ↓
+Temp files deleted
+```
+
+### What Is Never Transmitted
+
+- ✗ Document contents
+- ✗ Document metadata
+- ✗ File paths
+- ✗ Conversion parameters
+- ✗ Error messages containing filenames
+- ✗ Usage statistics
+- ✗ Device identifiers
+
+### What May Be Logged (Locally Only)
+
+- ✓ Conversion timestamps
+- ✓ File sizes (for UI display)
+- ✓ Error types (for diagnostics)
+- ✓ Feature usage counts (anonymous)
+
+## Known Limitations
+
+### Cannot Prevent
+
+1. **OS-level vulnerabilities**: If Android has a zero-day, the app is affected like any other app
+2. **User-initiated sharing**: If user chooses to share a converted file externally
+3. **Malware on device**: Other apps may access files if permissions are granted
+4. **Physical device access**: Anyone with physical access can use the app
+
+### Mitigations In Place
+
+1. App sandbox isolation (standard Android security)
+2. No persistent storage of converted files outside user's view
+3. No background services that could be exploited
+4. Regular dependency updates
+
+## Incident Response
+
+If a security vulnerability is discovered:
+
+1. **Assess**: Determine scope and impact
+2. **Patch**: Fix the vulnerability
+3. **Notify**: Update users via GitHub Release notes
+4. **Retire**: Mark affected versions as insecure
+5. **Report**: Consider CVE assignment for severe issues
+
+## Security Contacts
+
+- **GitHub Security Advisories**: https://github.com/penndivinefavour-lab/icon-docforge/security
+- **Email**: iconstudiosyde@gmail.com (for security inquiries only)
+
+## Certifications & Compliance
+
+This application:
+- ✓ Follows OWASP Mobile Top 10 guidelines
+- ✓ Implements principle of least privilege
+- ✓ Validates all user inputs
+- ✓ Uses secure defaults
+- ✓ Does not store sensitive data persistently
+- ✓ Operates fully offline
+
 ---
 
-## Responsible Disclosure
-
-If you discover a security vulnerability, please report it privately to the maintainers at [iconstudios@protonmail.com](mailto:iconstudios@protonmail.com). Do not disclose publicly until a fix is available.
+*Document Version: 1.0.0*
+*Last Updated: September 2026*
+*Author: Divine Favour · ICON Studios*
