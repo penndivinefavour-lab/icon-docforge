@@ -4,15 +4,6 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build type'
-        required: true
-        default: 'debug'
-        type: choice
-        options:
-          - debug
-          - release
 
 permissions:
   contents: write
@@ -31,13 +22,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+      - name: Install Android SDK
+        uses: futureware-tech/action-android-sdk@v1
         with:
-          api-level: 34
+          sdk-version: 34
           build-tools: '34.0.0'
 
-      - name: Setup Node 20
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -50,8 +41,6 @@ jobs:
         run: |
           mkdir -p android-apk/www
           cp -r web/* android-apk/www/
-          echo "Web assets synced:"
-          ls -la android-apk/www/
 
       - name: Sync Capacitor
         working-directory: ./android-apk
@@ -64,16 +53,21 @@ jobs:
       - name: Build debug APK
         working-directory: ./android-apk/android
         run: ./gradlew assembleDebug
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          JAVA_HOME: ${{ env.JAVA_HOME }}
 
-      - name: Generate SHA-256 checksums
+      - name: Find built APK
+        id: find_apk
         run: |
-          apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" | head -1)
+          apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
+          if [ -z "$apk_path" ]; then
+            apk_path=$(find android-apk/android/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
+          fi
           if [ -f "$apk_path" ]; then
             sha256sum "$apk_path" > "${apk_path}.sha256"
             echo "APK_PATH=$apk_path" >> $GITHUB_ENV
-            echo "Generated checksum for: $(basename $apk_path)"
-            ls -lh "$apk_path"
-            cat "${apk_path}.sha256"
+            echo "Generated checksum"
           else
             echo "ERROR: APK not found"
             exit 1
@@ -99,7 +93,7 @@ jobs:
           version="${GITHUB_REF#refs/tags/}"
           gh release create "$version" \
             --title "ICON DocForge $version" \
-            --notes "Production release of ICON DocForge offline document converter. All conversions run locally on your device." \
+            --notes "Production release of ICON DocForge offline document converter." \
             "$apk_path" \
             "$sha_path"
         env:
