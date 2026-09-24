@@ -24,12 +24,12 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
+        with:
+          cmdline-tools-version: "15859902"
 
       - name: Install platform tools
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" < /dev/null
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" --no_https --verbose
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
 
       - name: Setup Node
@@ -50,31 +50,27 @@ jobs:
         working-directory: ./android-apk
         run: npx cap sync android
 
-      - name: Grant execute permission to gradlew
+      - name: Build debug APK with Gradle
         working-directory: ./android-apk/android
-        run: chmod +x gradlew
-
-      - name: Build debug APK
-        working-directory: ./android-apk/android
-        run: ./gradlew assembleDebug
+        run: |
+          # Download and setup Gradle wrapper properly
+          gradle wrapper --gradle-version 8.2
+          ./gradlew assembleDebug
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Find built APK
         id: find_apk
         run: |
           apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
-          if [ -z "$apk_path" ]; then
-            apk_path=$(find android-apk/android/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
-          fi
           if [ -f "$apk_path" ]; then
             sha256sum "$apk_path" > "${apk_path}.sha256"
             echo "APK_PATH=$apk_path" >> $GITHUB_ENV
             echo "Generated checksum for: $(basename $apk_path)"
             ls -lh "$apk_path"
           else
-            echo "ERROR: APK not found"
+            echo "ERROR: APK not found in $apk_path"
             exit 1
           fi
 
