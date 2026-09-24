@@ -1,66 +1,32 @@
-name: Web Build
-
+name: Build Web/PWA
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+      - name: Package web assets
         run: |
-          npm ci
-          npm run build 2>/dev/null || echo "No build step needed for vanilla JS"
-
-      - name: Validate HTML
-        run: |
-          npx html-validator-cli --file index.html 2>/dev/null || echo "HTML validation skipped"
-
-      - name: Validate CSS
-        run: |
-          npx stylelint css/*.css 2>/dev/null || echo "CSS validation skipped"
-
-      - name: Bundle web assets
-        run: |
-          mkdir -p dist/www
-          cp -r index.html css js icons manifest.json robots.txt 404.html sw.js dist/www/ 2>/dev/null || true
-          ls dist/www/
-
-      - name: Generate SHA-256 checksums
-        run: |
-          cd dist/www
-          find . -type f -exec sha256sum {} \; > checksums.sha256
-          cat checksums.sha256
-
-      - name: Upload web build
+          mkdir -p dist/web
+          cp -r web/* dist/web/
+          find dist/web -type f | wc -l
+      - name: Upload web assets
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
-          path: dist/www/
+          name: icon-docforge-web
+          path: dist/web/
           retention-days: 7
-
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/www
+          publish_dir: ./dist/web
           publish_branch: gh-pages
-          commit_message: 'Deploy web build from main'
