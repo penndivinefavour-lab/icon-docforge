@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- App-specific temp directory for conversions -->
-    <files-path name="temp" path="temp/" />
     <cache-path name="cache" path="." />
-    
-    <!-- External storage for shared files (limited) -->
-    <external-files-path name="external" path="." />
-    
-    <!-- Document root for SAF -->
-    <root-path name="root" path="/" />
+    <files-path name="files" path="." />
 </paths>
