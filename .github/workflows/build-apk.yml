@@ -24,9 +24,6 @@ jobs:
 
       - name: Install Android SDK
         run: |
-          export ANDROID_HOME=$HOME/android-sdk
-          mkdir -p $ANDROID_HOME
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           sdkmanager "platforms;android-34" "build-tools;34.0.0" < /dev/null
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
@@ -58,7 +55,7 @@ jobs:
         run: ./gradlew assembleDebug
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Find built APK
         id: find_apk
