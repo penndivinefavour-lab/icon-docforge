@@ -46,8 +46,19 @@ jobs:
         working-directory: ./android-apk
         run: npx cap sync android
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Verify Gradle wrapper
+        working-directory: ./android-apk/android
+        run: |
+          echo "Checking gradle wrapper..."
+          ls -la gradle/wrapper/
+          echo "Jar size:"
+          wc -c gradle/wrapper/gradle-wrapper.jar
+          echo "Jar content (zip test):"
+          unzip -t gradle/wrapper/gradle-wrapper.jar 2>&1 | head -5
+          echo "Manifest:"
+          unzip -p gradle/wrapper/gradle-wrapper.jar META-INF/MANIFEST.MF
+          echo "Has GradleWrapperMain:"
+          unzip -l gradle/wrapper/gradle-wrapper.jar | grep GradleWrapperMain
 
       - name: Build debug APK
         working-directory: ./android-apk/android
