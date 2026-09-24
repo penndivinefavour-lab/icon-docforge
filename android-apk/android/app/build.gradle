@@ -1,5 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.application' version '8.1.0'
+    id 'org.jetbrains.kotlin.android' version '1.8.22'
+}
 
 android {
     namespace "com.iconstudios.docforge"
@@ -12,6 +14,11 @@ android {
         versionCode 14
         versionName "1.4.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    
+    buildFeatures {
+        buildConfig true
+        viewBinding true
     }
     
     buildTypes {
@@ -39,4 +46,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "com.google.android.material:material:1.11.0"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    
+    // Capacitor
+    implementation 'com.getcapacitor:core:6.0.0'
 }
