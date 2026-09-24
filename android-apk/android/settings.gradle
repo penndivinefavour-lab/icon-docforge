@@ -1,19 +1,13 @@
-buildscript {
-    ext {
-        agpVersion = '8.1.0'
-        kotlinVersion = '1.8.22'
-    }
+pluginManagement {
     repositories {
         google()
         mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:${agpVersion}")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        gradlePluginPortal()
     }
 }
 
-allprojects {
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
