@@ -33,7 +33,7 @@
     {
       "test": "DOCX\u2192ODT",
       "passed": true,
-      "detail": "8230B"
+      "detail": "8229B"
     },
     {
       "test": "Images\u2192PDF 2 imgs",
@@ -53,7 +53,7 @@
     {
       "test": "PDF merge",
       "passed": true,
-      "detail": "1852B"
+      "detail": "1854B"
     },
     {
       "test": "PDF split",
@@ -73,7 +73,7 @@
     {
       "test": "CSV\u2192XLSX",
       "passed": true,
-      "detail": "4961B"
+      "detail": "4960B"
     },
     {
       "test": "XLSX\u2192CSV",
