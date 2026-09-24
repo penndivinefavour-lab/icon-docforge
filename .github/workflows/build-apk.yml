@@ -28,9 +28,7 @@ jobs:
           cmdline-tools-version: "15859902"
 
       - name: Install platform tools
-        run: |
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" --no_https --verbose
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0" < /dev/null
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -52,13 +50,11 @@ jobs:
 
       - name: Build debug APK with Gradle
         working-directory: ./android-apk/android
-        run: |
-          # Download and setup Gradle wrapper properly
-          gradle wrapper --gradle-version 8.2
-          ./gradlew assembleDebug
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: gradle assembleDebug
 
       - name: Find built APK
         id: find_apk
@@ -68,9 +64,8 @@ jobs:
             sha256sum "$apk_path" > "${apk_path}.sha256"
             echo "APK_PATH=$apk_path" >> $GITHUB_ENV
             echo "Generated checksum for: $(basename $apk_path)"
-            ls -lh "$apk_path"
           else
-            echo "ERROR: APK not found in $apk_path"
+            echo "ERROR: APK not found"
             exit 1
           fi
 
