@@ -22,13 +22,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          cmdline-tools-version: "15859902"
-
-      - name: Install platform tools
-        run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0" < /dev/null
+      - name: Install Android SDK
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          mkdir -p $ANDROID_HOME
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" < /dev/null
+        env:
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -48,13 +49,16 @@ jobs:
         working-directory: ./android-apk
         run: npx cap sync android
 
-      - name: Build debug APK with Gradle
+      - name: Grant execute permission to gradlew
         working-directory: ./android-apk/android
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        working-directory: ./android-apk/android
+        run: ./gradlew assembleDebug
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-1/x64
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: gradle assembleDebug
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
       - name: Find built APK
         id: find_apk
