@@ -1,0 +1,30 @@
+{
+  "name": "ICON DocForge",
+  "short_name": "DocForge",
+  "description": "Offline-first document and file conversion suite by ICON Studios",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2744",
+  "theme_color": "#1a2744",
+  "orientation": "portrait",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ],
+  "prefer_wheel": false,
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any"}
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/",
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {"files": [{"name": "files", "accept": [".pdf", ".docx", ".pptx", ".xlsx", ".csv", ".png", ".jpg", ".jpeg", ".webp", ".md", ".txt", ".html"]}]}
+  }
+}

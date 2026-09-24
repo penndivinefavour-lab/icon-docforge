@@ -1,0 +1,81 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - 'android-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          api-level: 34
+          build-tools: '34.0.0'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: android-apk/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./android-apk
+        run: npm ci
+
+      - name: Sync web assets to www
+        run: |
+          mkdir -p android-apk/www
+          cp -r index.html css js icons manifest.json robots.txt 404.html sw.js android-apk/www/ 2>/dev/null || true
+          echo "Web assets synced:"
+          ls android-apk/www/
+
+      - name: Add Android platform
+        working-directory: ./android-apk
+        run: npx cap add android
+
+      - name: Build debug APK
+        working-directory: ./android-apk/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-docforge-debug-apk
+          path: android-apk/android/app/build/outputs/apk/debug/*.apk
+
+      - name: Generate SHA-256 checksums
+        run: |
+          APK_PATH=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" | head -1)
+          sha256sum "$APK_PATH" > "${APK_PATH}.sha256"
+          echo "SHA-256 checksum generated for: $(basename $APK_PATH)"
+          cat "${APK_PATH}.sha256"
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/android-v')
+        run: |
+          APK_PATH=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" | head -1)
+          SHA_PATH="${APK_PATH}.sha256"
+          gh release create "${GITHUB_REF#refs/tags/}" \
+            --generate-notes \
+            "$APK_PATH" \
+            "$SHA_PATH"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

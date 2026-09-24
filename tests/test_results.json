@@ -1,0 +1,111 @@
+{
+  "results": [
+    {
+      "test": "Registry initialized",
+      "passed": true,
+      "detail": "10 healthy"
+    },
+    {
+      "test": "Pandoc installed",
+      "passed": true,
+      "detail": "v3.11"
+    },
+    {
+      "test": "Poppler installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "WeasyPrint installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "GhostScript NOT installed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "DOCX\u2192PDF",
+      "passed": true,
+      "detail": "11272B"
+    },
+    {
+      "test": "DOCX\u2192ODT",
+      "passed": true,
+      "detail": "8230B"
+    },
+    {
+      "test": "Images\u2192PDF 2 imgs",
+      "passed": true,
+      "detail": "2p"
+    },
+    {
+      "test": "Images\u2192PDF WebP",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Empty images fails",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "PDF merge",
+      "passed": true,
+      "detail": "1852B"
+    },
+    {
+      "test": "PDF split",
+      "passed": true,
+      "detail": "2030B"
+    },
+    {
+      "test": "PDF\u2192images",
+      "passed": true,
+      "detail": "2p"
+    },
+    {
+      "test": "PDF metadata",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "CSV\u2192XLSX",
+      "passed": true,
+      "detail": "4961B"
+    },
+    {
+      "test": "XLSX\u2192CSV",
+      "passed": true,
+      "detail": "108B"
+    },
+    {
+      "test": "Markdown\u2192PDF",
+      "passed": true,
+      "detail": "4532B"
+    },
+    {
+      "test": "sanitize_filename",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "validate_path works",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "ensure_output_filename",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "safe_run",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": 21,
+  "total": 21
+}
