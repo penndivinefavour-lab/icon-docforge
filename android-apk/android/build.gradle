@@ -1,14 +1,1 @@
-buildscript {
-    ext {
-        agpVersion = '8.1.0'
-        kotlinVersion = '1.8.22'
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:${agpVersion}")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
-    }
-}
+// Root build.gradle - no buildscript needed, plugins are resolved via settings.gradle pluginManagement
