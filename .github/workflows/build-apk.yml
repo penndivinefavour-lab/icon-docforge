@@ -46,19 +46,21 @@ jobs:
         working-directory: ./android-apk
         run: npx cap sync android
 
-      - name: Verify Gradle wrapper
+      - name: Debug Gradle wrapper
         working-directory: ./android-apk/android
         run: |
-          echo "Checking gradle wrapper..."
+          echo "=== Working dir ==="
+          pwd
+          echo "=== Wrapper files ==="
           ls -la gradle/wrapper/
-          echo "Jar size:"
-          wc -c gradle/wrapper/gradle-wrapper.jar
-          echo "Jar content (zip test):"
-          unzip -t gradle/wrapper/gradle-wrapper.jar 2>&1 | head -5
-          echo "Manifest:"
-          unzip -p gradle/wrapper/gradle-wrapper.jar META-INF/MANIFEST.MF
-          echo "Has GradleWrapperMain:"
-          unzip -l gradle/wrapper/gradle-wrapper.jar | grep GradleWrapperMain
+          echo "=== Jar content ==="
+          unzip -l gradle/wrapper/gradle-wrapper.jar | grep -i wrappermain
+          echo "=== Test jar directly ==="
+          java -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain --version || true
+          echo "=== Gradle version in properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          echo "=== Testing jar with full path ==="
+          java -cp "$(pwd)/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain --version || true
 
       - name: Build debug APK
         working-directory: ./android-apk/android
