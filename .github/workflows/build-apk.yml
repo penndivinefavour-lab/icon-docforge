@@ -37,12 +37,10 @@ jobs:
           api-level: 34
           build-tools: '34.0.0'
 
-      - name: Setup Node
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: android-apk/package-lock.json
 
       - name: Install Android dependencies
         working-directory: ./android-apk
