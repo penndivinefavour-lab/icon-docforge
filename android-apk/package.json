@@ -1,0 +1,23 @@
+{
+  "name": "icon-docforge",
+  "version": "1.4.0",
+  "description": "ICON DocForge - Professional offline document converter",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve web -l 3000",
+    "build": "npm run lint && npm run test",
+    "lint": "eslint web/js/",
+    "test": "echo 'Tests run via python'"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}
