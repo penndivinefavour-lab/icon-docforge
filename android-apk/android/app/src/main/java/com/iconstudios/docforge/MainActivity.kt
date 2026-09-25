@@ -71,15 +71,7 @@ class MainActivity : AppCompatActivity() {
             settings.setSafeBrowsingEnabled(false)
         }
 
-        // Inject config before loading page
-        webView.evaluateJavascript("""
-            (function() {
-                window.ICON_DOCFORGE_OFFLINE = true;
-                window.ICON_DOCFORGE_API_BASE = 'http://127.0.0.1:$API_PORT';
-            })();
-        """, null)
-
-        // Set up WebViewClient
+        // Set up WebViewClient - intercept HTML to inject config BEFORE execution
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
@@ -91,15 +83,46 @@ class MainActivity : AppCompatActivity() {
                 progressBar.visibility = View.GONE
             }
 
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url.toString()
-                if (url.startsWith("file://") || url.startsWith("http://127.0.0.1") || 
-                    url.startsWith("https://") || url.startsWith("javascript:")) {
+                if (url.endsWith(".js")) {
+                    try {
+                        val path = java.net.URL(url).path
+                        if (path.contains("/app.js") || path.contains("/main.js")) {
+                            val assetName = path.replaceFirst("/", "assets/public/")
+                            val inputStream = assets.open(assetName)
+                            val content = inputStream.bufferedReader().readText()
+                            inputStream.close()
+
+                            // Inject config before the module runs
+                            val injectedContent = """
+                                window.ICON_DOCFORGE_OFFLINE = true;
+                                window.ICON_DOCFORGE_API_BASE = 'http://127.0.0.1:$API_PORT';
+                                $content
+                            """.trimIndent()
+
+                            return WebResourceResponse(
+                                "application/javascript",
+                                "UTF-8",
+                                injectedContent.byteInputStream()
+                            )
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e(TAG, "Failed to intercept JS: ${e.message}")
+                    }
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val reqUrl = request?.url.toString()
+                if (reqUrl.startsWith("file://") || reqUrl.startsWith("http://127.0.0.1") ||
+                    reqUrl.startsWith("https://") || reqUrl.startsWith("javascript:")) {
                     return false
                 }
                 // Handle custom URL schemes
                 try {
-                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)))
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(reqUrl)))
                     return true
                 } catch (e: Exception) {
                     return false
