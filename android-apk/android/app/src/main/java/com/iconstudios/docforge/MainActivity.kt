@@ -182,13 +182,13 @@ class MainActivity : AppCompatActivity() {
     // Handle activity recreation
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        webView.saveInstanceState(outState)
+        webView.saveState(outState)
     }
 
     // Restore WebView state
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        webView.restoreInstanceState(savedInstanceState)
+        webView.restoreState(savedInstanceState)
     }
 
     override fun onResume() {
