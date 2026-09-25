@@ -6,9 +6,10 @@
   'use strict';
 
   // ========== CONFIGURATION ==========
-  const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://127.0.0.1:8765/api' 
-    : '/api'; // For Capacitor WebView
+  const IS_ANDROID = Boolean(window.AndroidBridge);
+  const API_BASE = IS_ANDROID
+    ? null
+    : 'http://127.0.0.1:8765/api';
   
   const APP_VERSION = '1.4.0';
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -25,106 +26,20 @@
 
   // ========== TOOLS REGISTRY ==========
   // Only include tools that are actually supported in current environment
+  const ANDROID_ENGINE_REASON = 'Not available in the Android APK: the Termux/Python conversion engine is not bundled.';
   const TOOLS = [
-    { 
-      id: 'image-to-pdf', 
-      name: 'Images → PDF', 
-      desc: 'Combine images into a single PDF', 
-      icon: '◫', 
-      category: 'images',
-      available: true,
-      fidelity: 'available'
-    },
-    { 
-      id: 'pdf-merge', 
-      name: 'Merge PDFs', 
-      desc: 'Combine multiple PDFs', 
-      icon: '◫', 
-      category: 'pdf',
-      available: true,
-      fidelity: 'available'
-    },
-    { 
-      id: 'pdf-split', 
-      name: 'Split PDF', 
-      desc: 'Extract pages from PDF', 
-      icon: '◫', 
-      category: 'pdf',
-      available: true,
-      fidelity: 'available'
-    },
-    { 
-      id: 'pdf-reorder', 
-      name: 'Reorder Pages', 
-      desc: 'Change page order', 
-      icon: '↔', 
-      category: 'pdf',
-      available: false,
-      reason: 'Requires poppler tools not installed'
-    },
-    { 
-      id: 'pdf-rotate', 
-      name: 'Rotate Pages', 
-      desc: 'Rotate PDF pages', 
-      icon: '⟳', 
-      category: 'pdf',
-      available: false,
-      reason: 'Requires poppler tools not installed'
-    },
-    { 
-      id: 'pdf-to-images', 
-      name: 'PDF → Images', 
-      desc: 'Convert PDF pages to PNG/JPG', 
-      icon: '◫', 
-      category: 'pdf',
-      available: false,
-      reason: 'Requires pypdfium2 not installed'
-    },
-    { 
-      id: 'pdf-metadata', 
-      name: 'PDF Info', 
-      desc: 'View PDF properties', 
-      icon: 'ℹ', 
-      category: 'pdf',
-      available: false,
-      reason: 'Requires pdfplumber not installed'
-    },
-    { 
-      id: 'docx-to-pdf', 
-      name: 'DOCX → PDF', 
-      desc: 'Word documents to PDF', 
-      icon: '◫', 
-      category: 'documents',
-      available: false,
-      reason: 'Requires weasyprint not installed'
-    },
-    { 
-      id: 'markdown-to-pdf', 
-      name: 'MD → PDF', 
-      desc: 'Markdown to PDF', 
-      icon: '◫', 
-      category: 'documents',
-      available: false,
-      reason: 'Requires pandoc+weasyprint not installed'
-    },
-    { 
-      id: 'csv-xlsx', 
-      name: 'CSV ↔ XLSX', 
-      desc: 'Spreadsheet format conversion', 
-      icon: '◫', 
-      category: 'spreadsheets',
-      available: false,
-      reason: 'Requires openpyxl not installed'
-    },
-    { 
-      id: 'diagnostics', 
-      name: 'Diagnostics', 
-      desc: 'Check system status', 
-      icon: '⚙', 
-      category: 'tools',
-      available: true,
-      fidelity: 'available'
-    }
+    { id: 'image-to-pdf', name: 'Images → PDF', desc: 'Combine images into a single PDF', icon: '◫', category: 'images', available: true, fidelity: 'available' },
+    { id: 'pdf-merge', name: 'Merge PDFs', desc: 'Combine multiple PDFs', icon: '◫', category: 'pdf', available: true, fidelity: 'available' },
+    { id: 'pdf-split', name: 'Split PDF', desc: 'Extract pages from PDF', icon: '◫', category: 'pdf', available: true, fidelity: 'available' },
+    { id: 'pdf-reorder', name: 'Reorder Pages', desc: 'Change page order', icon: '↔', category: 'pdf', available: true, fidelity: 'available' },
+    { id: 'pdf-rotate', name: 'Rotate Pages', desc: 'Rotate PDF pages', icon: '⟳', category: 'pdf', available: true, fidelity: 'available' },
+    { id: 'pdf-to-images', name: 'PDF → Images', desc: 'Convert PDF pages to PNG/JPG', icon: '◫', category: 'pdf', available: false, reason: 'PDF page rasterization is not bundled in the Android APK' },
+    { id: 'pdf-metadata', name: 'PDF Info', desc: 'View PDF properties', icon: 'ℹ', category: 'pdf', available: false, reason: 'Metadata editing is not bundled in the Android APK' },
+    { id: 'pdf-text-search', name: 'PDF Text & Search', desc: 'Extract text and find phrases in PDFs', icon: '🔎', category: 'pdf', available: true, fidelity: 'available' },
+    { id: 'docx-to-pdf', name: 'DOCX → PDF', desc: 'Word documents to PDF', icon: '◫', category: 'documents', available: true, fidelity: 'reconstructed' },
+    { id: 'markdown-to-pdf', name: 'MD → PDF', desc: 'Markdown to PDF', icon: '◫', category: 'documents', available: false, reason: 'Markdown rendering is not bundled in the Android APK' },
+    { id: 'csv-xlsx', name: 'CSV ↔ XLSX', desc: 'Spreadsheet format conversion', icon: '◫', category: 'spreadsheets', available: true, fidelity: 'available' },
+    { id: 'diagnostics', name: 'Android Capabilities', desc: 'View bundled Android capabilities', icon: '⚙', category: 'tools', available: true, fidelity: 'available' }
   ];
 
   // ========== STATE ==========
@@ -291,11 +206,12 @@
     
     // Load tool module dynamically
     const script = document.createElement('script');
-    script.src = `/js/tools/${toolId}.js`;
+    const scriptName = toolId === 'diagnostics' ? 'engine-diagnostic' : toolId;
+    script.src = `js/tools/${scriptName}.js`;
     script.onload = () => {
-      if (window.DFTools && window.DFTools[toolId]) {
+      const toolModule = window.DFRegistry && window.DFRegistry[toolId];
+      if (toolModule) {
         try {
-          const toolModule = window.DFTools[toolId];
           $toolBody.innerHTML = '';
           const root = toolModule.render();
           $toolBody.appendChild(root);
@@ -623,7 +539,11 @@
   window.App = {
     toast: showToast,
     navigate: navigate,
-    apiBase: API_BASE
+    apiBase: API_BASE,
+    addToHistory: addToHistory
+  };
+  window.__docforgeTest = {
+    setSearch(value) { searchQuery = value.toLowerCase(); renderDashboard(); }
   };
 
   window.addEventListener('hashchange', handleRoute);

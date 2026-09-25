@@ -37,6 +37,15 @@ jobs:
         working-directory: ./android-apk
         run: npm ci
 
+      - name: Validate Android frontend integration
+        run: |
+          node tests/frontend_integration.js
+          for file in web/js/app.js web/js/tools/*.js; do node --check "$file"; done
+          test -s web/js/vendor/pdf-lib.min.js
+          test -s web/js/vendor/pdf.min.js
+          test -s web/js/vendor/xlsx.full.min.js
+          test -s web/js/vendor/mammoth.browser.min.js
+
       - name: Sync web assets to www
         run: |
           mkdir -p android-apk/www

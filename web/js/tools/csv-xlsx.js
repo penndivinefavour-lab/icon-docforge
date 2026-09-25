@@ -1,33 +1,6 @@
 (function () {
-  const id = 'csv-xlsx';
-  function render() {
-    const w = document.createElement('div');
-    w.innerHTML = `<div class="tool-section"><h3>Convert CSV ↔ XLSX</h3>
-      <div class="field"><label>Direction</label>
-        <select id="direction"><option value="csv-to-xlsx">CSV → XLSX</option><option value="xlsx-to-csv">XLSX → CSV</option></select></div>
-      <div class="field"><label>Select File</label><input type="file" id="file" class="input"/></div>
-      <button class="btn btn-primary btn-block" id="convert-btn" style="margin-top:12px">Convert</button></div>
-      <div id="result" style="margin-top:16px"></div>`;
-    return w;
-  }
-  function onMount(root) {
-    root.querySelector('#convert-btn').onclick = async () => {
-      const file = root.querySelector('#file').files[0];
-      if (!file) { window.App.toast('Select a file', 'error'); return; }
-      const dir = root.querySelector('#direction').value;
-      const btn = root.querySelector('#convert-btn'); btn.disabled = true; btn.textContent = 'Converting…';
-      const formData = new FormData(); formData.append('input', file);
-      try {
-        const resp = await fetch('http://127.0.0.1:8765/api/convert', { method: 'POST', body: formData });
-        const data = await resp.json();
-        if (data.success) {
-          root.querySelector('#result').innerHTML = `<div class="output-file"><div class="output-file-name">📊 ${data.output.split('/').pop()}</div><button class="btn btn-gold" onclick="window.open('${data.output}')">Open</button></div>`;
-          window.App.toast('Conversion complete!', 'success');
-        } else { root.querySelector('#result').innerHTML = `<p style="color:var(--error)">${data.error}</p>`; }
-      } catch(e) { root.querySelector('#result').innerHTML = '<p style="color:var(--error)">Engine offline</p>'; }
-      btn.disabled = false; btn.textContent = 'Convert';
-    };
-  }
-  if (!window.DFRegistry) window.DFRegistry = {};
-  window.DFRegistry[id] = { id, name: 'CSV ↔ XLSX', desc: 'Spreadsheet conversion', icon: '📊↔📊', category: 'spreadsheets', render, onMount };
+  const id='csv-xlsx';
+  function render(){const w=document.createElement('div');w.innerHTML=`<div class="tool-section"><h3>Convert CSV ↔ XLSX</h3><div class="field"><label>Direction</label><select id="dir" class="input"><option value="xlsx">XLSX → CSV</option><option value="csv">CSV → XLSX</option></select></div><div class="drop-zone" id="drop"><div class="drop-zone-icon">📊</div><div class="drop-zone-text">Tap to select a CSV or XLSX file</div><input type="file" id="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display:none"></div></div><button class="btn btn-primary btn-block" id="go" disabled>Convert</button><div id="result" style="margin-top:16px"></div>`;return w;}
+  async function onMount(root){let file=null;const input=root.querySelector('#file'),go=root.querySelector('#go');input.onchange=()=>{file=input.files[0];go.disabled=!file};root.querySelector('#drop').onclick=()=>input.click();go.onclick=async()=>{go.disabled=true;go.textContent='Converting…';try{let out,mime,name;if(root.querySelector('#dir').value==='xlsx'){const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});out=new TextEncoder().encode(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));mime='text/csv';name=file.name.replace(/\.xlsx$/i,'.csv');}else{const text=await file.text();const wb=XLSX.read(text,{type:'string',raw:true});const ws=wb.Sheets[wb.SheetNames[0]];const outWb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(outWb,ws,'Sheet1');out=XLSX.write(outWb,{type:'array',bookType:'xlsx'});mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';name=file.name.replace(/\.csv$/i,'.xlsx');}const saved=DFRuntime.saveBytes(out,name,mime);DFRuntime.resultView(root,saved.name,'Offline spreadsheet conversion',()=>AndroidBridge.openFile(saved.uri,saved.mime),()=>AndroidBridge.shareFile(saved.uri,saved.mime));}catch(e){window.App.toast(e.message,'error');}finally{go.disabled=false;go.textContent='Convert';}};}
+  window.DFRegistry=window.DFRegistry||{};window.DFRegistry[id]={id,name:'CSV ↔ XLSX',render,onMount};
 })();

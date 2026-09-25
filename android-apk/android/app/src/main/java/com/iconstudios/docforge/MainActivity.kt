@@ -1,6 +1,7 @@
 package com.iconstudios.docforge
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -15,6 +16,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import java.io.File
+import android.util.Base64
 
 class MainActivity : AppCompatActivity() {
 
@@ -71,7 +73,7 @@ class MainActivity : AppCompatActivity() {
             settings.setSafeBrowsingEnabled(false)
         }
 
-        // Set up WebViewClient - intercept HTML to inject config BEFORE execution
+        // Set up WebViewClient
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
@@ -83,36 +85,6 @@ class MainActivity : AppCompatActivity() {
                 progressBar.visibility = View.GONE
             }
 
-            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                val url = request?.url.toString()
-                if (url.endsWith(".js")) {
-                    try {
-                        val path = java.net.URL(url).path
-                        if (path.contains("/app.js") || path.contains("/main.js")) {
-                            val assetName = path.replaceFirst("/", "assets/public/")
-                            val inputStream = assets.open(assetName)
-                            val content = inputStream.bufferedReader().readText()
-                            inputStream.close()
-
-                            // Inject config before the module runs
-                            val injectedContent = """
-                                window.ICON_DOCFORGE_OFFLINE = true;
-                                window.ICON_DOCFORGE_API_BASE = 'http://127.0.0.1:$API_PORT';
-                                $content
-                            """.trimIndent()
-
-                            return WebResourceResponse(
-                                "application/javascript",
-                                "UTF-8",
-                                injectedContent.byteInputStream()
-                            )
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e(TAG, "Failed to intercept JS: ${e.message}")
-                    }
-                }
-                return super.shouldInterceptRequest(view, request)
-            }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val reqUrl = request?.url.toString()
@@ -181,6 +153,47 @@ class MainActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null
+                }
+            }
+
+            @JavascriptInterface
+            fun saveFile(name: String, mime: String, base64: String): String? {
+                return try {
+                    val safeName = name.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                    val outputDir = File(cacheDir, "outputs").apply { mkdirs() }
+                    val output = File(outputDir, safeName)
+                    output.writeBytes(Base64.decode(base64, Base64.DEFAULT))
+                    FileProvider.getUriForFile(this@MainActivity, "${packageName}.fileprovider", output).toString()
+                } catch (e: Exception) {
+                    Log.e(TAG, "saveFile failed", e)
+                    null
+                }
+            }
+
+            @JavascriptInterface
+            fun openFile(uriString: String, mime: String) {
+                runOnUiThread {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(Uri.parse(uriString), mime)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(intent)
+                    } catch (e: Exception) { Log.e(TAG, "openFile failed", e) }
+                }
+            }
+
+            @JavascriptInterface
+            fun shareFile(uriString: String, mime: String) {
+                runOnUiThread {
+                    try {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = mime
+                            putExtra(Intent.EXTRA_STREAM, Uri.parse(uriString))
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(Intent.createChooser(intent, "Share with"))
+                    } catch (e: Exception) { Log.e(TAG, "shareFile failed", e) }
                 }
             }
         }, "AndroidBridge")
