@@ -69,7 +69,10 @@
   // ========== NAVIGATION ==========
   function navigate(screen) {
     window.location.hash = screen;
-    switchScreen(screen);
+    // A tool route is "tool/<id>"; route it immediately as well as through hashchange.
+    // This avoids the Android WebView losing the first route update when the hash
+    // event is coalesced or ignored during a touch gesture.
+    handleRoute();
   }
 
   function switchScreen(screen) {
@@ -123,10 +126,6 @@
       chip.textContent = cat.icon + ' ' + cat.name;
       chip.setAttribute('role', 'tab');
       chip.setAttribute('aria-selected', cat.id === currentCategory);
-      chip.onclick = () => {
-        currentCategory = cat.id;
-        renderDashboard();
-      };
       $categoryFilters.appendChild(chip);
     });
 
@@ -148,6 +147,10 @@
     filtered.forEach(tool => {
       const card = document.createElement('div');
       card.className = 'tool-card' + (tool.available ? '' : ' disabled');
+      card.dataset.toolId = tool.id;
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.setAttribute('aria-label', tool.name);
       
       let badge = '';
       if (!tool.available) {
@@ -161,12 +164,7 @@
         ${badge}
       `;
       
-      if (tool.available) {
-        card.onclick = () => navigate('tool/' + tool.id);
-      } else if (tool.reason) {
-        card.title = tool.reason;
-        card.onclick = () => showToast(tool.reason, 'info');
-      }
+      if (!tool.available && tool.reason) card.title = tool.reason;
       
       $toolsGrid.appendChild(card);
     });
@@ -508,6 +506,26 @@
   }
 
   // ========== EVENT LISTENERS ==========
+  $toolsGrid?.addEventListener('click', (event) => {
+    const card = event.target.closest?.('.tool-card');
+    if (!card || !$toolsGrid.contains(card)) return;
+    const tool = TOOLS.find(t => t.id === card.dataset.toolId);
+    if (!tool) return;
+    if (tool.available) {
+      event.preventDefault();
+      navigate('tool/' + tool.id);
+    }
+  });
+
+  $categoryFilters?.addEventListener('click', (event) => {
+    const chip = event.target.closest?.('.category-chip');
+    if (!chip || !$categoryFilters.contains(chip)) return;
+    const index = Array.from($categoryFilters.children).indexOf(chip);
+    if (index < 0) return;
+    currentCategory = CATEGORIES[index].id;
+    renderDashboard();
+  });
+
   document.getElementById('back-btn')?.addEventListener('click', () => navigate('home'));
   document.getElementById('result-back')?.addEventListener('click', () => navigate('home'));
   document.getElementById('settings-back')?.addEventListener('click', () => navigate('home'));

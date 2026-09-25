@@ -112,6 +112,11 @@ class MainActivity : AppCompatActivity() {
 
         // Set up WebChromeClient for progress and dialogs
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                Log.d(TAG, "WebView console: ${message.message()} @${message.sourceId()}:${message.lineNumber()}")
+                return true
+            }
+
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 if (newProgress > 70) {
                     progressBar.visibility = View.GONE

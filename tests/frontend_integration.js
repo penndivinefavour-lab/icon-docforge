@@ -6,6 +6,15 @@ class Element {
   constructor(tag='div') { this.tagName=tag; this.children=[]; this.style={}; this.classList={add(){},remove(){}}; this.dataset={}; this._html=''; this.textContent=''; }
   addEventListener() {}
   setAttribute() {}
+  get dataset() { return this._dataset || (this._dataset = {}); }
+  set dataset(value) { this._dataset = value; }
+  closest(selector) {
+    if (selector === '.tool-card' && this.className && this.className.includes('tool-card')) return this;
+    return null;
+  }
+  contains(node) { return this === node || this.children.includes(node); }
+  get className() { return this._className || ''; }
+  set className(value) { this._className = value; }
   appendChild(child) { this.children.push(child); return child; }
   set innerHTML(value) { this._html=value; this.children=[]; }
   get innerHTML() { return this._html; }
@@ -38,4 +47,5 @@ if (search) {
   search.setSearch('split');
   assert.strictEqual(nodes['tools-grid'].children.length, 1, 'search should filter to PDF Split');
 }
-console.log('frontend integration PASS: 12 cards, 6 categories, DFRegistry loader');
+assert.strictEqual(typeof nodes['tools-grid'].addEventListener, 'function');
+console.log('frontend integration PASS: 12 cards, 6 categories, delegated grid listener, DFRegistry loader');
