@@ -1,8 +1,8 @@
 {
   "appId": "com.iconstudios.docforge",
   "appName": "ICON DocForge",
-  "webDir": "www",
-  "bundledWebRuntime": false,
+  "webDir": "../web",
+  "bundledWebRuntime": true,
   "server": {
     "androidScheme": "https"
   },
