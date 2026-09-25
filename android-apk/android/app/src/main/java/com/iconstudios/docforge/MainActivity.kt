@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import java.io.File
 import android.util.Base64
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 
