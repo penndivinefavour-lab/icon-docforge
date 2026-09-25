@@ -54,7 +54,53 @@ The prior Termux/Python engine remains in the repository for Termux use. It is n
 - Package ID: `com.iconstudios.docforge.debug`
 - Previous tags preserved: v1.0.0, v1.1.0, v1.2.0, v1.3.0, v1.4.0, v1.4.1
 
+## Latest interaction fix
+
+The blocking tap issue was fixed in the frontend interaction boundary. The previous implementation attached handlers directly to each dynamically-created card. The corrected implementation:
+
+- Stores each card's tool ID in `data-tool-id`.
+- Delegates tool-card clicks from the stable `#tools-grid` container.
+- Delegates category-chip clicks from the stable `#categories` container.
+- Calls `handleRoute()` immediately after changing the hash, while retaining hashchange handling.
+- Leaves unavailable cards non-clickable.
+- Forwards WebView console messages to Android logcat for physical tap diagnosis.
+
+The corrected APK was built successfully by GitHub Actions run `36119691743` and contains the expected frontend assets and interaction code.
+
 ## Physical Pixel 4a QA
+
+The corrected APK could not be physically tested because `adb devices -l` returned no connected device. No physical tap result is claimed.
+
+| Test | Result |
+|---|---|
+| ADB device discovery | BLOCKED — `adb devices` empty |
+| Corrected APK install | NOT RUN |
+| Corrected APK launch | NOT RUN |
+| Images → PDF card tap | NOT VERIFIED |
+| Merge PDFs card tap | NOT VERIFIED |
+| Split PDF card tap | NOT VERIFIED |
+| Reorder Pages card tap | NOT VERIFIED |
+| Rotate Pages card tap | NOT VERIFIED |
+| PDF Text & Search card tap | NOT VERIFIED |
+| DOCX → PDF card tap | NOT VERIFIED |
+| Search input interaction | NOT VERIFIED |
+| Category filter interaction | NOT VERIFIED |
+| Scrolling and tap after scrolling | NOT VERIFIED |
+| File picker opening | NOT VERIFIED |
+| Android back navigation | NOT VERIFIED |
+| Output opening and sharing | NOT VERIFIED |
+
+Corrected APK details:
+
+- Path: `apk-output/icon-docforge-v1.4.0-debug.apk`
+- Size: 7,137,744 bytes
+- SHA-256: `26c0781559a93ec88e7e16dc591b21296a644a95837b39b2e893498abd029da6`
+- Package ID: `com.iconstudios.docforge.debug`
+- Build result: PASS
+- Physical Pixel 4a result: BLOCKED — no ADB device available
+
+The app is not production-ready until this corrected APK is installed on the Pixel 4a and the interaction matrix above is physically exercised.
+
 
 | Test | Result |
 |---|---|
