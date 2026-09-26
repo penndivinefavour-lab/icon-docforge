@@ -39,10 +39,17 @@ jobs:
 
       - name: Sync web assets to www
         run: |
+          mkdir -p android-apk/android/app/src/main/assets/public
+          cp -r web/index.html web/css web/js web/manifest.json web/robots.txt web/404.html web/sw.js android-apk/android/app/src/main/assets/public/
+          [ -d web/icons ] && cp -r web/icons android-apk/android/app/src/main/assets/public/ || echo "No web/icons directory — skipping"
+          # Also keep www/ in sync for Capacitor compatibility
           mkdir -p android-apk/www
           cp -r web/index.html web/css web/js web/manifest.json web/robots.txt web/404.html web/sw.js android-apk/www/
           [ -d web/icons ] && cp -r web/icons android-apk/www/ || echo "No web/icons directory — skipping"
           echo "Web assets synced:"
+          echo "=== assets/public/ ==="
+          find android-apk/android/app/src/main/assets/public -type f | sort
+          echo "=== www/ ==="
           find android-apk/www -type f | sort
 
       # Skip npx cap add android — the Android project is already committed
