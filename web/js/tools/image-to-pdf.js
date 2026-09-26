@@ -27,7 +27,9 @@
         }
         const out = await doc.save();
         const saved = DFRuntime.saveBytes(out, 'images-to-pdf.pdf', 'application/pdf');
-        DFRuntime.resultView(root, saved.name, `${files.length} page(s)`, () => AndroidBridge.openFile(saved.uri, saved.mime), () => AndroidBridge.shareFile(saved.uri, saved.mime));
+                DFRuntime.resultView(root, saved.name, `${files.length} page(s)`,
+                  () => window.AndroidBridge && AndroidBridge.openFile(saved.uri, saved.mime),
+                  () => window.AndroidBridge && AndroidBridge.shareFile(saved.uri, saved.mime));
         window.App.toast('PDF generated', 'success');
       } catch (e) { window.App.toast(e.message, 'error'); } finally { go.disabled=false; go.textContent='Generate PDF'; }
     };
