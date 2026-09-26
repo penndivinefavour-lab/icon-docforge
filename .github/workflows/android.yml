@@ -40,9 +40,9 @@ jobs:
       - name: Sync web assets to www
         run: |
           mkdir -p android-apk/www
-          cp -r web/* android-apk/www/
+          cp -r web/index.html web/css web/js web/icons web/manifest.json web/robots.txt web/404.html web/sw.js android-apk/www/
           echo "Web assets synced:"
-          ls android-apk/www/
+          find android-apk/www -type f | sort
 
       # Skip npx cap add android — the Android project is already committed
       # and re-adding would destroy native changes in MainActivity.kt etc.
