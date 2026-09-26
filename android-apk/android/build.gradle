@@ -1,0 +1,1 @@
+// Root build.gradle - no buildscript needed, plugins are resolved via settings.gradle pluginManagement

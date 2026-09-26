@@ -1,58 +1,149 @@
-# Privacy Policy
+# PRIVACY POLICY — ICON DocForge
 
-**Effective Date: September 24, 2026**
-**ICON Studios**
+**Effective Date:** September 2026  
+**Version:** 1.4.0  
+**Developer:** ICON Studios  
+**Contact:** iconstudiosyde@gmail.com
 
-## Summary
+## Introduction
 
-ICON DocForge is built with privacy as a first-class feature. We collect **zero personal data**. Everything happens locally on your device.
+ICON DocForge is an offline document conversion application designed with privacy as a core principle. This policy explains how we handle your data—and more importantly, how we **do not** handle your data.
 
-## Data Collection
+## Data We Collect
 
-ICON DocForge **does not collect, store, or transmit any personal information**. Specifically:
+### We Do NOT Collect
 
-- **No personally identifiable information** (name, email, device ID, etc.)
-- **No document content** is uploaded, transmitted, or stored on any server
-- **No conversion history** is kept remotely
-- **No analytics, tracking, or telemetry** of any kind
-- **No cookies** or local storage beyond temporary session data
-- **No network calls** are made during conversion
+**Zero data is collected by ICON DocForge:**
 
-## How Conversions Work
+- ✗ No document contents
+- ✗ No document metadata
+- ✗ No file paths or names
+- ✗ No conversion history stored remotely
+- ✗ No device identifiers
+- ✗ No IP addresses
+- ✗ No usage statistics
+- ✗ No crash reports sent to third parties
+- ✗ No analytics data
 
-1. You select a file on your device
-2. The file is processed locally by the Python engine
-3. The output is saved to your chosen location
-4. **No data ever leaves your device**
+## How the App Works
 
-## Local Data
+### Local Processing Only
 
-- Temporary files are stored in `/tmp/docforge/` during conversion
-- These files are automatically cleaned up after conversion completes
-- No persistent database exists
+All document conversions happen **entirely on your device**:
+
+1. You select a file from your device storage
+2. The file is copied to the app's private temporary directory
+3. The app's built-in Python engine processes the file
+4. The converted output is generated in the same temporary directory
+5. You choose to open, share, or save the result
+6. Temporary files are deleted
+
+**At no point are your documents transmitted anywhere.**
+
+### Network Activity
+
+The app makes **zero network requests** during normal operation. The only network-related functionality is:
+
+- Optional: Checking for app updates (disabled by default)
+- Required: Capacitor WebView bridge (internal communication only)
+
+Both occur exclusively between the app and itself—no external servers are contacted.
+
+## Data Stored on Your Device
+
+### Temporary Files
+
+- **Location:** App's private temp directory
+- **Lifetime:** Deleted immediately after conversion (success or failure)
+- **Content:** Same as your input files + converted output
+- **Access:** Only the app can access these files
+
+### Local Storage
+
+- **Location:** Android SharedPreferences
+- **Content:** App preferences, conversion history (local only)
+- **Duration:** Persist until app uninstall
+- **Purpose:** Remember your settings and recent conversions
+
+### No Cloud Storage
+
+We do not use:
+- Cloud databases
+- Remote file storage
+- Backup services
+- Sync services
 
 ## Third-Party Services
 
-- **None.** ICON DocForge does not use any third-party analytics, advertising, or tracking services.
-- The web UI loads entirely from local assets. No external CDNs are called.
-- Fonts may load from Google Fonts CDN if the web version is accessed online, but the Android APK bundles all assets locally.
+### None Used
 
-## Your Rights
+ICON DocForge does not integrate with any third-party services, including:
 
-Since no data is collected, there is nothing to delete. All documents you process remain under your control on your device.
+- ✗ Google Analytics
+- ✗ Firebase
+- ✗ Crashlytics
+- ✗ AdMob
+- ✗ Social media APIs
+- ✗ Payment processors
+- ✗ Email services
+
+### Open Source Libraries
+
+The app uses open-source libraries, but they operate locally:
+
+| Library | Purpose | Data Exposure |
+|---------|---------|---------------|
+| ReportLab | PDF generation | None |
+| python-docx | DOCX handling | None |
+| Pillow | Image processing | None |
+| pypdfium2 | PDF rendering | None |
+| Pandoc | Format conversion | None |
+
+These libraries process data locally and do not transmit anything externally.
 
 ## Children's Privacy
 
-ICON DocForge does not target children under 13 and does not knowingly collect data from children.
+ICON DocForge is not intended for children under 13. However, since we collect no data whatsoever, this policy applies equally to all users regardless of age.
+
+## Data Retention
+
+Since we collect no data, there is nothing to retain. Temporary files are deleted immediately after use.
+
+## Your Rights
+
+Under GDPR and other privacy laws, you have the right to:
+
+- **Access:** There is no data to access
+- **Rectification:** There is no data to correct
+- **Erasure:** There is no data to erase
+- **Portability:** There is no data to export
+- **Objection:** You may object to processing at any time (there is no processing)
 
 ## Changes to This Policy
 
-If we ever change our privacy practices, we will update this document and notify users before any changes take effect.
+We may update this privacy policy occasionally. Changes will be:
 
-## Contact
+1. Posted in the app's Settings screen
+2. Updated in the repository README
+3. Reflective of actual data practices
 
-For privacy-related questions: [iconstudios@protonmail.com](mailto:iconstudios@protonmail.com)
+Since we collect no data, changes are unlikely but possible if we add new features.
+
+## Contact Us
+
+If you have questions about this privacy policy:
+
+- **Email:** iconstudiosyde@gmail.com
+- **GitHub:** https://github.com/penndivinefavour-lab/icon-docforge/issues
+- **In-App:** Settings → About → Contact Developer
+
+## Conclusion
+
+**Your documents are your documents.** They never leave your device. We cannot see them, share them, sell them, or analyze them. This is not a feature—it is the fundamental design principle of ICON DocForge.
+
+Thank you for trusting us with your documents.
 
 ---
 
-This privacy policy is derived from the project's open-source commitment. The full source code is available on GitHub: https://github.com/penndivinefavour-lab/icon-docforge
+*ICON Studios · Yaoundé, Cameroon*  
+*Made with care for privacy-conscious users*

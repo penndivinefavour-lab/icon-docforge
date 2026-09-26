@@ -1,0 +1,103 @@
+name: Build Release APK
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          api-level: 34
+          build-tools: '34.0.0'
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: android-apk/package-lock.json
+      
+      - name: Install Android dependencies
+        working-directory: ./android-apk
+        run: npm ci
+      
+      - name: Sync web assets
+        run: |
+          mkdir -p android-apk/android/app/src/main/assets/www
+          cp -r web/* android-apk/android/app/src/main/assets/www/
+          echo "Web assets synced:"
+          ls -la android-apk/android/app/src/main/assets/www/
+      
+      - name: Add Android platform
+        working-directory: ./android-apk
+        run: npx cap add android
+      
+      - name: Decode keystore
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+          echo "KEYSTORE_PATH=$(pwd)/keystore.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+      
+      - name: Build debug APK
+        working-directory: ./android-apk/android
+        run: ./gradlew assembleDebug
+      
+      - name: Build release APK (if tagged)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        working-directory: ./android-apk/android
+        run: ./gradlew assembleRelease
+      
+      - name: Generate SHA-256 checksums
+        run: |
+          apk_path=$(find android-apk/android/app/build/outputs/apk -name "*.apk" | head -1)
+          sha256sum "$apk_path" > "${apk_path}.sha256"
+          echo "APK_PATH=$apk_path" >> $GITHUB_ENV
+          echo "SHA256=$(cat ${apk_path}.sha256)" >> $GITHUB_ENV
+          echo "Generated checksum for: $(basename $apk_path)"
+      
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-docforge-debug
+          path: android-apk/android/app/build/outputs/apk/debug/*.apk
+      
+      - name: Upload release APK (if tagged)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-docforge-release
+          path: android-apk/android/app/build/outputs/apk/release/*.apk
+      
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          apk_path=$(find android-apk/android/app/build/outputs/apk/release -name "*.apk" | head -1)
+          sha_path="${apk_path}.sha256"
+          gh release create "${GITHUB_REF#refs/tags/}" \
+            --title "ICON DocForge $(echo ${GITHUB_REF#refs/tags/} | sed 's/^v//')" \
+            --notes "Production release of ICON DocForge" \
+            "$apk_path" \
+            "$sha_path"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

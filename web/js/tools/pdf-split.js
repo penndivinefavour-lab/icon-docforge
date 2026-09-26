@@ -1,49 +1,45 @@
 (function () {
-  const id = 'pdf-split';
-  function render() {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = `
-      <div class="tool-section"><h3>Select PDF</h3>
-        <input type="file" id="pdf-file" accept=".pdf" class="input"/>
-        <p id="page-count" style="font-size:12px;color:var(--text-muted)"></p></div>
-      <div class="tool-section"><h3>Extract Pages</h3>
-        <div class="field"><label>Page Range (e.g., 1-3 or 1,3,5)</label><input type="text" id="pages" placeholder="1-3" class="input"/></div>
-        <div class="field"><label>Output Filename</label><input type="text" id="output" placeholder="split_output.pdf" class="input"/></div>
-        <button class="btn btn-primary btn-block" id="split-btn">Extract Pages</button></div>
-      <div id="result" style="margin-top:16px"></div>
-    `;
-    return wrap;
-  }
-  function onMount(root) {
-    const fileInput = root.querySelector('#pdf-file');
-    const countEl = root.querySelector('#page-count');
-    const splitBtn = root.querySelector('#split-btn');
-    const result = root.querySelector('#result');
-
-    fileInput.onchange = () => { countEl.textContent = 'Selected: ' + fileInput.files[0]?.name || ''; };
-    splitBtn.onclick = async () => {
-      const file = fileInput.files[0];
-      const pages = root.querySelector('#pages').value;
-      const output = root.querySelector('#output').value || 'split_output.pdf';
-      if (!file) { window.App.toast('Select a PDF', 'error'); return; }
-      if (!pages) { window.App.toast('Enter page range', 'error'); return; }
-      splitBtn.disabled = true; splitBtn.textContent = 'Splitting…';
-      result.innerHTML = '<div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div><p class="progress-text">Splitting…</p>';
-      const formData = new FormData();
-      formData.append('input', file);
-      formData.append('pages', pages);
-      formData.append('output', output);
-      try {
-        const resp = await fetch('http://127.0.0.1:8765/api/pdf-split', { method: 'POST', body: formData });
-        const data = await resp.json();
-        if (data.success) {
-          result.innerHTML = `<div class="output-file"><div class="output-file-name">📄 ${data.output.split('/').pop()}</div><button class="btn btn-gold" onclick="window.open('${data.output}')">Open</button></div>`;
-          window.App.toast('PDF split!', 'success');
-        } else { result.innerHTML = `<p style="color:var(--error)">${data.error}</p>`; }
-      } catch(e) { result.innerHTML = '<p style="color:var(--error)">Engine offline</p>'; }
-      splitBtn.disabled = false; splitBtn.textContent = 'Extract Pages';
+  const id='pdf-split'; const {PDFDocument}=window.PDFLib;
+  function render(){const w=document.createElement('div');w.innerHTML=`<div class="tool-section"><h3>Select PDF</h3><div class="drop-zone" id="drop"><div class="drop-zone-icon">📄</div><div class="drop-zone-text">Tap to select a PDF</div><input type="file" id="file" accept="application/pdf" style="display:none"></div></div><div class="field"><label>Page range</label><input class="input" id="range" placeholder="e.g. 2-3,5"></div><button class="btn btn-primary btn-block" id="go" disabled>Split PDF</button><div id="result" style="margin-top:16px"></div>`;return w;}
+  async function onMount(root){let file=null;const input=root.querySelector('#file'),go=root.querySelector('#go');
+    input.onchange=()=>{file=input.files[0];go.disabled=!file};
+    root.querySelector('#drop').onclick=()=>input.click();
+    go.onclick=async()=>{go.disabled=true;go.textContent='Splitting...';
+      try{
+        const src=await PDFDocument.load(await file.arrayBuffer()),
+              count=src.getPageCount(),
+              parts=[];
+        const pages=[];
+        for(const token of root.querySelector('#range').value.split(',').map(x=>x.trim()).filter(Boolean)){
+          const m=token.match(/^(\d+)(?:-(\d+))?$/);
+          if(!m)throw Error('Invalid page range');
+          let a=+m[1],b=m[2]?+m[2]:a;
+          if(a<1||b>count||a>b)throw Error('Page range outside PDF');
+          for(let p=a;p<=b;p++)pages.push(p-1);
+        }
+        if(!pages.length)throw Error('Enter a page range');
+        for(const p of pages){
+          const d=await PDFDocument.create();
+          const [c]=await d.copyPages(src,[p]);
+          d.addPage(c);
+          const b=await d.save();
+          const saved=DFRuntime.saveBytes(b,`${file.name.replace(/\.pdf$/i,'')}-page-${p+1}.pdf`,'application/pdf');
+          parts.push(saved);
+        }
+        const result=root.querySelector('#result');
+        result.innerHTML=`<p>Generated ${parts.length} file(s)</p>`;
+        parts.forEach((s,i)=>{
+          const row=document.createElement('div');
+          row.className='output-file';
+          row.innerHTML=`<div class="output-file-name">${s.name}</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-gold" data-open="${i}">Open</button><button class="btn btn-secondary" data-share="${i}">Share</button></div>`;
+          result.appendChild(row);
+        });
+        result.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>window.AndroidBridge&&AndroidBridge.openFile(parts[+b.dataset.open].uri,parts[+b.dataset.open].mime));
+        result.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>window.AndroidBridge&&AndroidBridge.shareFile(parts[+b.dataset.share].uri,parts[+b.dataset.share].mime));
+        window.App.toast('PDF split','success');
+      }catch(e){window.App.toast(e.message,'error');}
+      finally{go.disabled=false;go.textContent='Split PDF';}
     };
   }
-  if (!window.DFRegistry) window.DFRegistry = {};
-  window.DFRegistry[id] = { id, name: 'PDF Split', desc: 'Extract pages', icon: '📄→📄+📄', category: 'pdf', render, onMount };
+  window.DFRegistry=window.DFRegistry||{};window.DFRegistry[id]={id,name:'PDF Split',render,onMount};
 })();

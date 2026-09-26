@@ -1,0 +1,2 @@
+pluginManager.create("com.android.application", "com.android.build.gradle.AppPlugin")
+pluginManager.create("org.jetbrains.kotlin.android", "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper")

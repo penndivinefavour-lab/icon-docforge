@@ -1,0 +1,13 @@
+{
+  "appId": "com.iconstudios.docforge",
+  "appName": "ICON DocForge",
+  "webDir": "../web",
+  "bundledWebRuntime": true,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "FileChooser": {},
+    "Filesystem": {}
+  }
+}

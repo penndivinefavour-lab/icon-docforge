@@ -1,0 +1,252 @@
+package com.iconstudios.docforge
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.view.Gravity
+import android.view.KeyEvent
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.*
+import android.widget.FrameLayout
+import android.widget.ProgressBar
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import java.io.File
+import android.util.Base64
+import android.util.Log
+
+class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val TAG = "IconDocForge"
+        const val API_PORT = 8765
+    }
+
+    private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
+
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Create container
+        val container = FrameLayout(this)
+        setContentView(container)
+
+        // Create WebView
+        webView = WebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        // Create progress bar
+        progressBar = ProgressBar(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+            visibility = View.VISIBLE
+        }
+
+        container.addView(webView)
+        container.addView(progressBar)
+
+        // Configure WebView
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settings.loadsImagesAutomatically = true
+        settings.allowFileAccess = true
+        settings.allowContentAccess = true
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+        settings.pluginState = WebSettings.PluginState.ON_DEMAND
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            settings.setSafeBrowsingEnabled(false)
+        }
+
+        // Set up WebViewClient
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                progressBar.visibility = View.VISIBLE
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                progressBar.visibility = View.GONE
+            }
+
+
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val reqUrl = request?.url.toString()
+                if (reqUrl.startsWith("file://") || reqUrl.startsWith("http://127.0.0.1") ||
+                    reqUrl.startsWith("https://") || reqUrl.startsWith("javascript:")) {
+                    return false
+                }
+                // Handle custom URL schemes
+                try {
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(reqUrl)))
+                    return true
+                } catch (e: Exception) {
+                    return false
+                }
+            }
+
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame == true) {
+                    android.util.Log.e(TAG, "Failed to load page: ${error?.description}")
+                }
+            }
+        }
+
+        // Set up WebChromeClient for progress and dialogs
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                Log.d(TAG, "WebView console: ${message.message()} @${message.sourceId()}:${message.lineNumber()}")
+                return true
+            }
+
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                if (newProgress > 70) {
+                    progressBar.visibility = View.GONE
+                }
+                super.onProgressChanged(view, newProgress)
+            }
+
+            override fun onJsAlert(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                result?.confirm()
+                return true
+            }
+
+            override fun onJsConfirm(view: WebView?, url: String?, message: String?, result: JsResult?): Boolean {
+                result?.confirm()
+                return true
+            }
+
+            override fun onJsPrompt(view: WebView?, url: String?, message: String?, defaultValue: String?, result: JsPromptResult?): Boolean {
+                result?.confirm(defaultValue ?: "")
+                return true
+            }
+        }
+
+        // Add JavaScript interface for native functionality
+        webView.addJavascriptInterface(object : Any() {
+            @JavascriptInterface
+            fun getFileUri(filePath: String): String? {
+                return try {
+                    val file = File(filePath)
+                    if (file.exists()) {
+                        val uri = FileProvider.getUriForFile(
+                            this@MainActivity,
+                            "${packageName}.fileprovider",
+                            file
+                        )
+                        uri.toString()
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
+
+            @JavascriptInterface
+            fun saveFile(name: String, mime: String, base64: String): String? {
+                return try {
+                    val safeName = name.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                    val outputDir = File(cacheDir, "outputs").apply { mkdirs() }
+                    val output = File(outputDir, safeName)
+                    output.writeBytes(Base64.decode(base64, Base64.DEFAULT))
+                    FileProvider.getUriForFile(this@MainActivity, "${packageName}.fileprovider", output).toString()
+                } catch (e: Exception) {
+                    Log.e(TAG, "saveFile failed", e)
+                    null
+                }
+            }
+
+            @JavascriptInterface
+            fun openFile(uriString: String, mime: String) {
+                runOnUiThread {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(Uri.parse(uriString), mime)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(intent)
+                    } catch (e: Exception) { Log.e(TAG, "openFile failed", e) }
+                }
+            }
+
+            @JavascriptInterface
+            fun shareFile(uriString: String, mime: String) {
+                runOnUiThread {
+                    try {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = mime
+                            putExtra(Intent.EXTRA_STREAM, Uri.parse(uriString))
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(Intent.createChooser(intent, "Share with"))
+                    } catch (e: Exception) { Log.e(TAG, "shareFile failed", e) }
+                }
+            }
+        }, "AndroidBridge")
+
+        // Load the web app
+        val url = "file:///android_asset/public/index.html"
+        android.util.Log.d(TAG, "Loading: $url")
+        webView.loadUrl(url)
+    }
+
+    // Handle back button for WebView navigation
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (webView.canGoBack()) {
+                webView.goBack()
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    // Handle activity recreation
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        webView.saveState(outState)
+    }
+
+    // Restore WebView state
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        webView.restoreState(savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+        webView.resumeTimers()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+        webView.pauseTimers()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        webView.destroy()
+    }
+}

@@ -1,0 +1,26 @@
+(function () {
+  const id='pdf-reorder';const {PDFDocument}=window.PDFLib;
+  function render(){const w=document.createElement('div');w.innerHTML=`<div class="tool-section"><h3>Reorder PDF Pages</h3><div class="drop-zone" id="drop"><div class="drop-zone-icon">↔</div><div class="drop-zone-text">Tap to select a PDF</div><input type="file" id="file" accept="application/pdf" style="display:none"></div></div><div class="field"><label>New page order</label><input class="input" id="order" placeholder="e.g. 3,1,2"></div><button class="btn btn-primary btn-block" id="go" disabled>Reorder Pages</button><div id="result" style="margin-top:16px"></div>`;return w;}
+  async function onMount(root){let file=null;const input=root.querySelector('#file'),go=root.querySelector('#go');
+    input.onchange=()=>{file=input.files[0];go.disabled=!file};
+    root.querySelector('#drop').onclick=()=>input.click();
+    go.onclick=async()=>{go.disabled=true;go.textContent='Reordering...';
+      try{
+        const src=await PDFDocument.load(await file.arrayBuffer()),
+              count=src.getPageCount(),
+              order=root.querySelector('#order').value.split(',').map(x=>+x.trim()),
+              out=await PDFDocument.create();
+        if(order.length!==count||order.some((p,i)=>p<1||p>count||order.indexOf(p)!==i))
+          throw Error(`Enter every page from 1 to ${count} exactly once`);
+        const pages=await out.copyPages(src,order.map(x=>x-1));
+        pages.forEach(p=>out.addPage(p));
+        const saved=DFRuntime.saveBytes(await out.save(),`${file.name.replace(/\.pdf$/i,'')}-reordered.pdf`,'application/pdf');
+        DFRuntime.resultView(root,saved.name,count+' pages',
+          ()=>window.AndroidBridge&&AndroidBridge.openFile(saved.uri,saved.mime),
+          ()=>window.AndroidBridge&&AndroidBridge.shareFile(saved.uri,saved.mime));
+      }catch(e){window.App.toast(e.message,'error');}
+      finally{go.disabled=false;go.textContent='Reorder Pages';}
+    };
+  }
+  window.DFRegistry=window.DFRegistry||{};window.DFRegistry[id]={id,name:'Reorder Pages',render,onMount};
+})();

@@ -1,0 +1,115 @@
+name: Build ICON DocForge APK
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install platform tools
+        run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0" < /dev/null
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Android dependencies
+        working-directory: ./android-apk
+        run: npm ci
+
+      - name: Validate Android frontend integration
+        run: |
+          node tests/frontend_integration.js
+          for file in web/js/app.js web/js/tools/*.js; do node --check "$file"; done
+          test -s web/js/vendor/pdf-lib.min.js
+          test -s web/js/vendor/pdf.min.js
+          test -s web/js/vendor/xlsx.full.min.js
+          test -s web/js/vendor/mammoth.browser.min.js
+
+      - name: Sync web assets to www
+        run: |
+          mkdir -p android-apk/www
+          cp -r web/* android-apk/www/
+
+      - name: Sync Capacitor
+        working-directory: ./android-apk
+        run: npx cap sync android
+
+      - name: Debug Gradle wrapper
+        working-directory: ./android-apk/android
+        run: |
+          echo "=== Working dir ==="
+          pwd
+          echo "=== Wrapper files ==="
+          ls -la gradle/wrapper/
+          echo "=== Jar content ==="
+          unzip -l gradle/wrapper/gradle-wrapper.jar | grep -i wrappermain
+          echo "=== Test jar directly ==="
+          java -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain --version || true
+          echo "=== Gradle version in properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          echo "=== Testing jar with full path ==="
+          java -cp "$(pwd)/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain --version || true
+
+      - name: Build debug APK
+        working-directory: ./android-apk/android
+        run: ./gradlew assembleDebug
+
+      - name: Find built APK
+        id: find_apk
+        run: |
+          apk_path=$(find android-apk/android/app/build/outputs/apk/debug -name "*.apk" 2>/dev/null | head -1)
+          if [ -f "$apk_path" ]; then
+            sha256sum "$apk_path" > "${apk_path}.sha256"
+            echo "APK_PATH=$apk_path" >> $GITHUB_ENV
+            echo "Generated checksum for: $(basename $apk_path)"
+          else
+            echo "ERROR: APK not found"
+            exit 1
+          fi
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-docforge-debug-apk
+          path: ${{ env.APK_PATH }}
+
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-docforge-checksum
+          path: ${{ env.APK_PATH }}.sha256
+
+      - name: Create GitHub Release (tagged only)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          apk_path="${{ env.APK_PATH }}"
+          sha_path="${apk_path}.sha256"
+          version="${GITHUB_REF#refs/tags/}"
+          gh release create "$version" \
+            --title "ICON DocForge $version" \
+            --notes "Production release of ICON DocForge offline document converter." \
+            "$apk_path" \
+            "$sha_path"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

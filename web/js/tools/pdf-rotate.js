@@ -1,28 +1,6 @@
 (function () {
-  const id = 'pdf-rotate';
-  function render() {
-    const w = document.createElement('div');
-    w.innerHTML = `<div class="tool-section"><h3>Rotate PDF Pages</h3><input type="file" id="file" accept=".pdf" class="input"/>
-      <div class="field"><label>Rotation</label><select id="rot"><option value="90">90° CW</option><option value="180">180°</option><option value="270">270° CW</option></select></div>
-      <button class="btn btn-primary" id="rotate-btn" style="margin-top:12px">Rotate</button></div>
-      <div id="result" style="margin-top:16px"></div>`;
-    return w;
-  }
-  function onMount(root) {
-    root.querySelector('#rotate-btn').onclick = async () => {
-      const file = root.querySelector('#file').files[0];
-      if (!file) { window.App.toast('Select a PDF', 'error'); return; }
-      const formData = new FormData(); formData.append('input', file); formData.append('rotation', root.querySelector('#rot').value);
-      try {
-        const resp = await fetch('http://127.0.0.1:8765/api/pdf-rotate', { method: 'POST', body: formData });
-        const data = await resp.json();
-        if (data.success) {
-          root.querySelector('#result').innerHTML = `<div class="output-file"><div class="output-file-name">📄 ${data.output.split('/').pop()}</div><button class="btn btn-gold" onclick="window.open('${data.output}')">Open</button></div>`;
-          window.App.toast('PDF rotated!', 'success');
-        } else { root.querySelector('#result').innerHTML = `<p style="color:var(--error)">${data.error}</p>`; }
-      } catch(e) { root.querySelector('#result').innerHTML = '<p style="color:var(--error)">Engine offline</p>'; }
-    };
-  }
-  if (!window.DFRegistry) window.DFRegistry = {};
-  window.DFRegistry[id] = { id, name: 'PDF Rotate', desc: 'Rotate pages', icon: '🔄📄', category: 'pdf', render, onMount };
+  const id='pdf-rotate';const {PDFDocument,degrees}=window.PDFLib;
+  function render(){const w=document.createElement('div');w.innerHTML=`<div class="tool-section"><h3>Rotate PDF Pages</h3><div class="drop-zone" id="drop"><div class="drop-zone-icon">🔄</div><div class="drop-zone-text">Tap to select a PDF</div><input type="file" id="file" accept="application/pdf" style="display:none"></div></div><div class="field"><label>Rotation</label><select id="angle" class="input"><option value="90">90° clockwise</option><option value="180">180°</option><option value="270">270° clockwise</option></select></div><div class="field"><label>Pages (optional)</label><input class="input" id="pages" placeholder="All pages, or e.g. 1,3-4"></div><button class="btn btn-primary btn-block" id="go" disabled>Rotate Pages</button><div id="result" style="margin-top:16px"></div>`;return w;}
+  async function onMount(root){let file=null;const input=root.querySelector('#file'),go=root.querySelector('#go');input.onchange=()=>{file=input.files[0];go.disabled=!file};root.querySelector('#drop').onclick=()=>input.click();go.onclick=async()=>{go.disabled=true;go.textContent='Rotating…';try{const pdf=await PDFDocument.load(await file.arrayBuffer()),count=pdf.getPageCount(),spec=root.querySelector('#pages').value.trim(),targets=new Set();if(spec){for(const token of spec.split(',').map(x=>x.trim()).filter(Boolean)){const m=token.match(/^(\d+)(?:-(\d+))?$/);if(!m)throw Error('Invalid page range');const a=+m[1],b=m[2]?+m[2]:a;if(a<1||b>count||a>b)throw Error('Page range outside PDF');for(let p=a;p<=b;p++)targets.add(p-1);}}else for(let p=0;p<count;p++)targets.add(p);pdf.getPages().forEach((p,i)=>{if(targets.has(i))p.setRotation(degrees(p.getRotation().angle+ +root.querySelector('#angle').value));});const saved=DFRuntime.saveBytes(await pdf.save(),`${file.name.replace(/\.pdf$/i,'')}-rotated.pdf`,'application/pdf');DFRuntime.resultView(root,saved.name,targets.size+' page(s) rotated',()=>AndroidBridge.openFile(saved.uri,saved.mime),()=>AndroidBridge.shareFile(saved.uri,saved.mime));}catch(e){window.App.toast(e.message,'error');}finally{go.disabled=false;go.textContent='Rotate Pages';}};}
+  window.DFRegistry=window.DFRegistry||{};window.DFRegistry[id]={id,name:'Rotate Pages',render,onMount};
 })();

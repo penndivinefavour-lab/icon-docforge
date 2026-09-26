@@ -1,71 +1,565 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<meta name="theme-color" content="#1a2744"/>
-<meta name="description" content="ICON DocForge - Offline-first document and file conversion suite by ICON Studios"/>
-<meta name="author" content="ICON Studios"/>
-<title>ICON DocForge — Offline Document Converter</title>
-<link rel="manifest" href="/manifest.json"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="DocForge"/>
-<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png"/>
-<link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/css/style.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a2744">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="ICON DocForge - Professional offline document converter">
+    <title>ICON DocForge</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <style>
+        /* ========== DESIGN SYSTEM ========== */
+        :root {
+            --color-primary-deep: #1a2744;
+            --color-primary-purple: #6b21a8;
+            --color-accent-gold: #f5c518;
+            --color-success: #388e3c;
+            --color-error: #d32f2f;
+            --color-bg: #f4f4f8;
+            --color-surface: #ffffff;
+            --color-border: #e2e4ec;
+            --color-text: #1f2128;
+            --color-text-muted: #6b7280;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 2px 8px rgba(26,39,64,0.06);
+            --shadow-md: 0 4px 12px rgba(26,39,64,0.1);
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: var(--font-main);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ========== TOPBAR ========== */
+        .topbar {
+            background: var(--color-primary-deep);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .topbar-back {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+        }
+        
+        .topbar-back:active { background: rgba(255,255,255,0.1); }
+        
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .brand-mark {
+            width: 32px;
+            height: 32px;
+            background: var(--color-accent-gold);
+            color: var(--color-primary-deep);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        /* ========== HERO ========== */
+        .hero {
+            background: linear-gradient(135deg, var(--color-primary-deep) 0%, var(--color-primary-purple) 100%);
+            color: white;
+            padding: 32px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .hero-sub {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .privacy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        /* ========== SEARCH ========== */
+        .search-wrap {
+            position: relative;
+            padding: 16px;
+            background: var(--color-surface);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            background: var(--color-bg);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary-purple);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-muted);
+        }
+        
+        /* ========== CATEGORIES ========== */
+        .categories {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            overflow-x: auto;
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .category-chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .category-chip.active {
+            background: var(--color-primary-purple);
+            color: white;
+            border-color: var(--color-primary-purple);
+        }
+        
+        /* ========== TOOL GRID ========== */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        @media (min-width: 480px) {
+            .tools-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        .tool-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .tool-card:hover {
+            border-color: var(--color-primary-purple);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .tool-card:active { transform: scale(0.98); }
+        
+        .tool-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .tool-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .tool-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .tool-desc {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+        
+        .tool-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .badge-available { background: #d1fae5; color: #065f46; }
+        .badge-reconstructed { background: #fef3c7; color: #92400e; }
+        .badge-unavailable { background: #fee2e2; color: #991b1b; }
+        
+        /* ========== FILE PICKER ========== */
+        .file-picker {
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--color-bg);
+        }
+        
+        .file-picker:hover { border-color: var(--color-primary-purple); }
+        
+        .file-picker-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .file-picker-text {
+            color: var(--color-text-muted);
+            font-size: 14px;
+        }
+        
+        /* ========== PROGRESS ========== */
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--color-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary-purple), var(--color-accent-gold));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        /* ========== BUTTONS ========== */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--color-primary-purple);
+            color: white;
+        }
+        
+        .btn-primary:active { opacity: 0.9; }
+        
+        .btn-secondary {
+            background: var(--color-bg);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+        
+        .btn-gold {
+            background: var(--color-accent-gold);
+            color: var(--color-primary-deep);
+        }
+        
+        .btn-block { width: 100%; }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* ========== RESULT CARD ========== */
+        .result-card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 16px 0;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .result-file-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .result-file-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .result-file-info {
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .result-actions .btn { flex: 1; }
+        
+        /* ========== HISTORY ========== */
+        .history-section {
+            padding: 16px;
+        }
+        
+        .history-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .history-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--color-primary-purple);
+            color: white;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .history-info { flex: 1; }
+        
+        .history-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .history-date {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+        
+        /* ========== FOOTER ========== */
+        .footer {
+            padding: 16px;
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 12px;
+        }
+        
+        /* ========== TOAST ========== */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+        }
+        
+        .toast {
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .toast-success { background: var(--color-success); }
+        .toast-error { background: var(--color-error); }
+        .toast-info { background: var(--color-primary-deep); }
+        
+        /* ========== UTILITY ========== */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-16 { margin-top: 16px; }
+        .mb-16 { margin-bottom: 16px; }
+        
+        /* ========== SCREENS ========== */
+        .screen {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* ========== LOADING ========== */
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-primary-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* ========== ACCESSIBILITY ========== */
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+        
+        *:focus-visible {
+            outline: 3px solid var(--color-accent-gold);
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <!-- HOME / DASHBOARD -->
-  <div id="home-screen" class="screen active">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="brand"><div class="brand-mark">◆</div><span class="brand-name">ICON DocForge</span></div>
-      </div>
-    </header>
-    <section class="hero">
-      <h1>Document Conversion Studio</h1>
-      <p class="hero-sub">Powerful offline conversion. Your files stay on your device.</p>
-      <div class="privacy-badge">🔒 <span>Your files never leave your device</span></div>
-    </section>
-    <div class="search-wrap">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="search-input" type="search" placeholder="Search conversions…" aria-label="Search"/>
+    <!-- HOME SCREEN -->
+    <div id="home-screen" class="screen active">
+        <header class="topbar">
+            <div class="brand-mark">◆</div>
+            <span style="font-size: 18px; font-weight: 700;">ICON DocForge</span>
+        </header>
+        
+        <section class="hero">
+            <h1>Document Conversion Studio</h1>
+            <p class="hero-sub">Professional offline conversion. Your files stay on your device.</p>
+            <div class="privacy-badge">🔒 <span>Processed locally — nothing leaves your phone</span></div>
+        </section>
+        
+        <div class="search-wrap">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="search" class="search-input" id="search-input" placeholder="Search tools...">
+        </div>
+        
+        <div class="categories" id="categories"></div>
+        
+        <main class="tools-grid" id="tools-grid"></main>
+        
+        <div class="history-section" id="history-section" style="display: none;">
+            <h3 class="history-title">Recent Conversions</h3>
+            <div id="history-list"></div>
+        </div>
+        
+        <footer class="footer">
+            <p>© 2026 ICON Studios · Yaoundé, Cameroon</p>
+            <p style="margin-top: 4px;">v<span id="app-version">1.4.0</span> · Offline Document Converter</p>
+        </footer>
     </div>
-    <div id="category-filters" class="category-filters" role="tablist"></div>
-    <main id="tools-grid" class="tools-grid" aria-live="polite"></main>
-    <footer class="footer"><p>© 2026 ICON Studios · Yaoundé, Cameroon</p></footer>
-  </div>
-
-  <!-- TOOL SCREEN -->
-  <div id="tool-screen" class="screen">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <button id="back-btn" class="btn-icon" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></button>
-        <div class="tool-title-wrap"><span id="tool-icon" class="tool-icon-display"></span><span id="tool-title" class="tool-title-display"></span></div>
-      </div>
-    </header>
-    <main id="tool-body" class="tool-body"></main>
-  </div>
-
-  <!-- DETAIL SCREEN -->
-  <div id="detail-screen" class="screen">
-    <header class="topbar">
-      <div class="topbar-inner">
-        <button id="detail-back" class="btn-icon" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></button>
-        <span id="detail-title" class="tool-title-display"></span>
-      </div>
-    </header>
-    <main id="detail-body" class="tool-body"></main>
-  </div>
-</div>
-
-<script src="/js/app.js"></script>
-<script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
-</script>
+    
+    <!-- TOOL SCREEN -->
+    <div id="tool-screen" class="screen">
+        <header class="topbar">
+            <button class="topbar-back" id="back-btn" aria-label="Back">←</button>
+            <span class="topbar-title" id="tool-title">Tool</span>
+        </header>
+        
+        <main id="tool-body" style="padding: 16px; flex: 1;"></main>
+    </div>
+    
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="screen">
+        <header class="topbar">
+            <button class="topbar-back" id="result-back" aria-label="Back">←</button>
+            <span class="topbar-title">Conversion Complete</span>
+        </header>
+        
+        <main style="padding: 16px; flex: 1;">
+            <div class="result-card">
+                <div class="result-file-icon" id="result-icon">📄</div>
+                <div class="result-file-name" id="result-name">document.pdf</div>
+                <div class="result-file-info" id="result-info">2.4 MB · PDF Document</div>
+                <div class="result-actions">
+                    <button class="btn btn-primary" id="btn-open">Open</button>
+                    <button class="btn btn-secondary" id="btn-share">Share</button>
+                </div>
+            </div>
+            
+            <button class="btn btn-block btn-gold mt-16" id="btn-convert-another">Convert Another</button>
+        </main>
+    </div>
+    
+    <!-- SETTINGS SCREEN -->
+    <div id="settings-screen" class="screen">
+        <header class="topbar">
+            <button class="topbar-back" id="settings-back" aria-label="Back">←</button>
+            <span class="topbar-title">Settings</span>
+        </header>
+        
+        <main style="padding: 16px; flex: 1;">
+            <div id="settings-content"></div>
+        </main>
+    </div>
+    
+    <script src="js/vendor/pdf-lib.min.js"></script>
+    <script src="js/vendor/pdf.min.js"></script>
+    <script src="js/vendor/xlsx.full.min.js"></script>
+    <script src="js/vendor/mammoth.browser.min.js"></script>
+    <script src="js/vendor/html2canvas.min.js"></script>
+    <script src="js/vendor/jspdf.umd.min.js"></script>
+    <script src="js/tools/runtime.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
