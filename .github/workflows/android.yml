@@ -40,7 +40,8 @@ jobs:
       - name: Sync web assets to www
         run: |
           mkdir -p android-apk/www
-          cp -r web/index.html web/css web/js web/icons web/manifest.json web/robots.txt web/404.html web/sw.js android-apk/www/
+          cp -r web/index.html web/css web/js web/manifest.json web/robots.txt web/404.html web/sw.js android-apk/www/
+          [ -d web/icons ] && cp -r web/icons android-apk/www/ || echo "No web/icons directory — skipping"
           echo "Web assets synced:"
           find android-apk/www -type f | sort
 
