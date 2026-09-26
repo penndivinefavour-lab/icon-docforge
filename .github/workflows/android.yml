@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,9 +25,6 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          api-level: 34
-          build-tools: '34.0.0'
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -36,24 +33,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: android-apk/package-lock.json
 
-      - name: Install dependencies
+      - name: Install web dependencies
         working-directory: ./android-apk
         run: npm ci
 
       - name: Sync web assets to www
         run: |
           mkdir -p android-apk/www
-          cp -r index.html css js icons manifest.json robots.txt 404.html sw.js android-apk/www/ 2>/dev/null || true
+          cp -r web/* android-apk/www/
           echo "Web assets synced:"
           ls android-apk/www/
 
-      - name: Add Android platform
-        working-directory: ./android-apk
-        run: npx cap add android
+      # Skip npx cap add android — the Android project is already committed
+      # and re-adding would destroy native changes in MainActivity.kt etc.
 
       - name: Build debug APK
         working-directory: ./android-apk/android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
